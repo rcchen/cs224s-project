@@ -4,12 +4,12 @@
 This script requires Python 3 and the scikit-learn package. See the README file for more details.
 Example invocations:
     Generate the features from the tokenized essays:
-        $ python essay_baseline.py [--train ] [--test] [--preprocessor]
+        $ python speech_transcription_baseline.py [--train ] [--test] [--preprocessor]
 
     Run with precomputed features:
-        $ python essay_baseline.py [--train] [--test dev] [--preprocessor] \
-                                   --training_features path/to/train/featurefile \
-                                   --test_features /path/to/test/featurefile
+        $ python speech_transcription_baseline.py [--train] [--test dev] [--preprocessor] \
+                                                  --training_features path/to/train/featurefile \
+                                                  --test_features /path/to/test/featurefile
 """
 import argparse
 from sklearn.preprocessing import Normalizer
@@ -18,7 +18,7 @@ from sklearn.svm import LinearSVC
 from baseline_util import (get_features_and_labels, write_predictions_file,
                            display_classification_results, write_feature_files)
 
-BASELINE = 'essays'
+BASELINE = 'speech_transcriptions'
 
 
 def main():
@@ -100,7 +100,6 @@ def main():
     #
     write_predictions_file(predicted, test_partition_name, predictions_outfile_name, BASELINE)
     display_classification_results(encoded_test_labels, predicted)
-
 
 
 if __name__ == '__main__':
