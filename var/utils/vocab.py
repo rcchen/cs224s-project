@@ -1,6 +1,6 @@
 # source: https://github.com/DeNeutoy/Decomposable_Attn/blob/master/Vocab.py
 
-import os, json
+import os, glob, json
 from collections import Counter
 from nltk.tokenize import word_tokenize
 
@@ -37,15 +37,14 @@ class Vocab(object):
             self.token_id[token] = idx
             self.id_token[idx] = token
 
-    def create_vocab(self, dataset_path, vocab_file ,max_vocab_size):
+    def create_vocab(self, dataset_path, vocab_file, max_vocab_size):
 
         print("generating vocab from dataset at {}".format(dataset_path))
         all_words = []
-        for root, dirnames, filenames in os.walk(dataset_path):
-            for f in filenames:
-                if f.endswith('.txt'):
-                    with open(os.path.join(root, f), 'r') as fd:
-                        all_words += word_tokenize(fd.read().lower())
+        for filename in glob.glob(os.path.join(dataset_path, '*', 'tokenized',
+                                               '*.txt')):
+            with open(filename, 'r') as f:
+                all_words += word_tokenize(f.read().lower())
 
         counter = Counter(all_words)
         count_pairs = sorted(counter.items(), key=lambda x : (-x[1], x[0]))
