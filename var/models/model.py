@@ -3,12 +3,12 @@ import tensorflow as tf
 class NativeLanguageIdentificationModel(object):
      """Abstracts a Tensorflow graph for the NLI task."""
 
-     def __init__(self, batch_size):
+     def __init__(self, batch_size, max_seq_len):
         # TODO: Initialize model with common private _variables, such as model
         # hyperparameters. Subclasses will call super(<SubClass>, self).__init__
         # to inherit this initialization method.
         self._batch_size = batch_size
-
+        self._max_seq_len = max_seq_len
 
     def create_feed_dict(self, labels_batch, essay_inputs_batch, speech_transcription_inputs_batch, ivector_inputs_batch):
         """Creates the feed_dict for one step of training.
@@ -37,10 +37,15 @@ class NativeLanguageIdentificationModel(object):
         See for more information:
         https://www.tensorflow.org/versions/r0.7/api_docs/python/io_ops.html#placeholders
         """
-        self.labels_placeholder = tf.placeholder(tf.int64, shape=(self.batch_size), name='labels')
-        self.essay_inputs_placeholder = tf.placeholder(tf.int64, shape=(self.batch_size, None), name='essay_inputs')
-        self.speech_transcriptions_inputs_placeholder = tf.placeholder(tf.int64, shape=(self.batch_size, None), name='speech_transcription_inputs')
-        self.ivector_inputs_placeholder = tf.placeholder(tf.int64, shape=(self.batch_size, None), name='ivector_inputs')
+        self.labels_placeholder = tf.placeholder(tf.int64,\
+            shape=(self.batch_size), name='labels')
+        self.essay_inputs_placeholder = tf.placeholder(tf.int64, \
+            shape=(self.batch_size, self._max_seq_len), name='essay_inputs')
+        self.speech_transcriptions_inputs_placeholder = tf.placeholder(tf.int64, \
+            shape=(self.batch_size, self._max_seq_len), name='speech_transcription_inputs')
+        # TODO: Replace `None` with ivector dimension size
+        self.ivector_inputs_placeholder = tf.placeholder(tf.int64, \
+            shape=(self.batch_size, None), name='ivector_inputs')
 
 
     def add_prediction_op(self):
