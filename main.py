@@ -43,7 +43,27 @@ def test():
 
 
 def get_model():
-    # TODO: Returns the correct corresponding model.
+    # TODO: Returns the correct corresponding model. Let's start with just SVM.
+
+    # BASELINE DETAILS
+    # Baseline uses tf.contrib.learn.SVM, a well-defined classifier. It takes in
+    # FeatureColumns, and we just call `fit` and `evaluate` on the classifier
+    # instance.
+
+    # TRAINING AND EVALUATING SVM
+    # `fit` represents an instance of training, and `evaluate` gives us both the
+    # loss and accuracy metrics. It uses SDCAOptimizer by default.
+
+    # DATA VECTORIZATION
+    # We will also need to implement something like a CountVectorizer. Right now
+    # our dataset wraps around a pandas DataFrame containing vocab indices of
+    # tokens from our dataset. While this will help us train our models on
+    # sequence-aware neural nets, SVM will need to use token counts instead.
+
+    # More information about SVM
+    # Documentation: https://www.tensorflow.org/api_docs/python/tf/contrib/learn/SVM
+    # Example usage: https://github.com/tensorflow/tensorflow/blob/r1.1/tensorflow/contrib/learn/python/learn/estimators/svm_test.py
+
     return NotImplementedError
 
 
