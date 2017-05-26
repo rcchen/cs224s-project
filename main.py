@@ -43,10 +43,8 @@ def test():
 
 
 def get_model():
-    # Returns the correct corresponding model.
-    # if FLAGS.model == 'baseline':
-    #     return
-    pass
+    # TODO: Returns the correct corresponding model.
+    return NotImplementedError
 
 
 def main(unused_argv):

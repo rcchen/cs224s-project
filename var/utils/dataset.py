@@ -37,7 +37,6 @@ class Dataset(object):
             with open(data_file, "wb") as f:
                 pickle.dump(self._dataframes, f)
 
-
     def _create_dataframes(self, data_dir, input_type, preprocessor, mode, max_seq_len, vocab):
         """Creates the pandas dataframes for the data."""
         labels_path = ("{data_dir}/labels/{mode}/labels.{mode}.csv".format(
@@ -56,7 +55,6 @@ class Dataset(object):
         df = self.extract_features(data_files, labels, vocab, max_seq_len)
         return pd.DataFrame(df)
 
-
     @staticmethod
     def pad_fn(seq, max_seq_len):
         """Truncates a sequence to the max length, padding when necessary."""
@@ -65,7 +63,6 @@ class Dataset(object):
             return seq[:max_seq_len]
         else:
             return np.pad(seq, (0, max_seq_len - len(seq)), "constant")
-
 
     def extract_features(self, file_list, labels, vocab, max_seq_len):
         """Returns a dictionary of features, labels, and sequence lengths for the dataset."""
@@ -79,3 +76,27 @@ class Dataset(object):
                 df['features'].append(self.pad_fn(tokens, max_seq_len))
                 df['lengths'].append(len(tokens))
         return df
+
+    def _make_batch(self, df):
+        # The sequence lengths are required in order to use Tensorflow's dynamic rnn functions correctly
+        return np.stack(df["s1_padded"]), np.stack(df["s1_len"]),\
+            np.stack(df["s2_padded"]), np.stack(df["s2_len"]),\
+            np.stack(df["l_int"])
+
+    def _make_iterator(self, df, batch_size):
+        total_examples = len(df)
+        examples_read = 0
+        while examples_read + batch_size <= total_examples:
+            yield self._make_batch(df[examples_read:examples_read + batch_size])
+            examples_read += batch_size
+        yield self._make_batch(df[examples_read:])
+
+    def get_iterator(self, split, batch_size):
+        return self._make_iterator(self._dataframes[split], batch_size)
+
+    def get_shuffled_iterator(self, split, batch_size):
+        df = self._dataframes[split]
+        return self._make_iterator(df.sample(len(df)), batch_size)
+
+    def split_num_batches(self, split, batch_size):
+        return int(math.ceil(float(len(self._dataframes[split]))/batch_size))
