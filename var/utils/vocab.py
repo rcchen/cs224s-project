@@ -63,22 +63,16 @@ class Vocab(object):
     def size(self):
         return len(self.token_id) + 2  # +1 for UNK & PAD
 
-    def id_for_token(self, token, update=True):
+    def id_for_token(self, token):
         if token in self.token_id:
             return self.token_id[token]
-        elif not update:
-            return self.UNK_ID
-        elif self.vocab_file is not None:
-            raise Exception("cstrd with vocab_file=[%s] but missing entry [%s]" % (self.vocab_file, token))
-        else:
-            self.token_id[token] = self.seq
-            self.id_token[self.seq] = token
-            self.seq += 1
-            return self.seq - 1
+        return self.UNK_ID
 
-    def ids_for_tokens(self, tokens, update=True):
-        return [self.id_for_token(t, update) for t in tokens]
+    def ids_for_tokens(self, tokens):
+        return [self.id_for_token(t) for t in tokens]
 
+    def ids_for_sentence(self, sentence):
+        return self.ids_for_tokens(word_tokenize(sentence.lower()))
 
     def token_for_id(self, id):
 
