@@ -1,3 +1,3 @@
 # Import all models, for convenience.
 
-from baseline import LinearSvmModel
+from svm import LinearSvmModel

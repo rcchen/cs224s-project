@@ -70,12 +70,12 @@ class Dataset(object):
         df = {}
         df['labels'] = np.array([self.CLASS_LABELS.index(l) for l in labels], dtype=np.int64)
         df['features'] = []
-        df['lengths'] = []
+        df['lengths'] = np.empty(shape=(), dtype=np.int64)
         for filename in file_list:
             with open(filename) as f:
                 tokens = vocab.ids_for_sentence(f.read())
-                df['features'].append(self.pad_fn(tokens, max_seq_len))
-                df['lengths'].append(len(tokens))
+                df['features'].append(np.array(self.pad_fn(tokens, max_seq_len), dtype=np.int64))
+                df['lengths'] = np.append(df['lengths'], [len(tokens)])
         return df
 
     def _make_batch(self, df):

@@ -18,7 +18,7 @@ flags.DEFINE_string('input_type', 'essays', 'Input data feature type: either "es
                     "speech_transcriptions+ivectors" ')
 flags.DEFINE_string('preprocessor', 'tokenized', 'Name of directory with processed essay files.')
 flags.DEFINE_string('max_seq_len', 1000, 'Max number of words in an example.')
-flags.DEFINE_string('batch_size', 3, 'Number of examples to run in a batch.')
+flags.DEFINE_string('batch_size', 100, 'Number of examples to run in a batch.')
 flags.DEFINE_string('num_epochs', 50, 'Number of epochs to train for.')
 flags.DEFINE_string('debug', False, 'Run on debug mode, using a smaller data set.')
 
@@ -81,14 +81,16 @@ def train(model, dataset):
 def test(model, dataset):
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
+        sess.run(tf.local_variables_initializer())
         # TODO: Evaluate the model on the data.
         raise NotImplementedError
 
 
-def get_model(vocab):
+def get_model(vocab, dataset):
     kwargs = {
         'batch_size': FLAGS.batch_size,
-        'max_seq_len': FLAGS.max_seq_len
+        'max_seq_len': FLAGS.max_seq_len,
+        'num_classes': len(dataset.CLASS_LABELS)
     }
     # TODO: Returns the correct corresponding model. Let's start with just SVM.
     return LinearSvmModel(vocab, **kwargs)
@@ -107,7 +109,7 @@ def main(unused_argv):
     with tf.Graph().as_default():
 
         # Load the model.
-        model = get_model(vocab)
+        model = get_model(vocab, dataset)
         model.build()
 
         # Run the model.
