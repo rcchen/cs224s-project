@@ -19,7 +19,6 @@ class Dataset(object):
                  data_dir,          # directory containing the data
                  input_type,        # e.g. 'essays', 'speech_transcriptions'
                  preprocessor,      # e.g. 'tokenized'
-                 mode,              # e.g. 'train', 'dev'
                  max_seq_len,       # max length of a sequence to ingest
                  vocab,             # Vocabulary instance
                  regular_data_file,
@@ -33,28 +32,32 @@ class Dataset(object):
             print "Loading data from the pickled file..."
         else:
             self._dataframes = self._create_dataframes(data_dir, input_type,
-                                    preprocessor, mode, max_seq_len, vocab)
+                                    preprocessor, max_seq_len, vocab)
             print "Pickling the data object..."
             with open(data_file, "wb") as f:
                 pickle.dump(self._dataframes, f)
 
-    def _create_dataframes(self, data_dir, input_type, preprocessor, mode, max_seq_len, vocab):
+    def _create_dataframes(self, data_dir, input_type, preprocessor, max_seq_len, vocab):
         """Creates the pandas dataframes for the data."""
-        labels_path = ("{data_dir}/labels/{mode}/labels.{mode}.csv".format(
-            data_dir=data_dir, mode=mode
-        ))
-        data_path = ("{data_dir}/{input_type}/{mode}/{preprocessor}/".format(
-            data_dir=data_dir, input_type=input_type, mode=mode,
-            preprocessor=preprocessor
-        ))
+        df = {}
+        for split in ['dev', 'train']:
 
-        with open(labels_path) as labels_f:
-            data_files, labels = \
-                zip(*[(os.path.join(data_path, row['test_taker_id'] + '.txt'),
-                        row['L1']) for row in csv.DictReader(labels_f)])
+            labels_path = ("{data_dir}/labels/{split}/labels.{split}.csv".format(
+                data_dir=data_dir, split=split
+            ))
+            data_path = ("{data_dir}/{input_type}/{split}/{preprocessor}/".format(
+                data_dir=data_dir, input_type=input_type, split=split,
+                preprocessor=preprocessor,
+            ))
 
-        df = self.extract_features(data_files, labels, vocab, max_seq_len)
-        return pd.DataFrame(df)
+            with open(labels_path) as labels_f:
+                data_files, labels = \
+                    zip(*[(os.path.join(data_path, row['test_taker_id'] + '.txt'),
+                            row['L1']) for row in csv.DictReader(labels_f)])
+                df[split] = pd.DataFrame(self.extract_features(data_files,
+                                         labels, vocab, max_seq_len))
+
+        return df
 
     @staticmethod
     def pad_fn(seq, max_seq_len):
@@ -70,12 +73,16 @@ class Dataset(object):
         df = {}
         df['labels'] = np.array([self.CLASS_LABELS.index(l) for l in labels], dtype=np.int64)
         df['features'] = []
-        df['lengths'] = np.empty(shape=(), dtype=np.int64)
+        df['lengths'] = []
         for filename in file_list:
             with open(filename) as f:
                 tokens = vocab.ids_for_sentence(f.read())
                 df['features'].append(np.array(self.pad_fn(tokens, max_seq_len), dtype=np.int64))
-                df['lengths'] = np.append(df['lengths'], [len(tokens)])
+                df['lengths'].append(len(tokens))
+
+        # Data consistency check
+        assert len(df['labels']) == len(df['features']) == len(df['lengths'])
+
         return df
 
     def _make_batch(self, df):
@@ -91,12 +98,15 @@ class Dataset(object):
         if examples_read < total_examples:  # there are still examples left to return
             yield self._make_batch(df[examples_read:])
 
-    def get_iterator(self, batch_size):
-        return self._make_iterator(self._dataframes, batch_size)
+    def get_iterator(self, split, batch_size):
+        return self._make_iterator(self._dataframes[split], batch_size)
 
-    def get_shuffled_iterator(self, batch_size):
-        df = self._dataframes
+    def get_shuffled_iterator(self, split, batch_size):
+        df = self._dataframes[split]
         return self._make_iterator(df.sample(len(df)), batch_size)
 
-    def split_num_batches(self, batch_size):
-        return int(math.ceil(float(len(self._dataframes)) / batch_size))
+    def split_size(self, split):
+        return len(self._dataframes[split])
+
+    def split_num_batches(self, split, batch_size):
+        return int(math.ceil(float(len(self._dataframes[split])) / batch_size))

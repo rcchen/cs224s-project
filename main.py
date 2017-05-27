@@ -22,6 +22,9 @@ flags.DEFINE_string('batch_size', 100, 'Number of examples to run in a batch.')
 flags.DEFINE_string('num_epochs', 10, 'Number of epochs to train for.')
 flags.DEFINE_string('debug', False, 'Run on debug mode, using a smaller data set.')
 
+flags.DEFINE_string('train_split', 'train', 'Split to train the model on.')
+flags.DEFINE_string('dev_split', 'dev', 'Split to evaluate the model on.')
+
 # TODO: add model-saving capabilities
 flags.DEFINE_boolean("save", True, "Whether to save the model.")
 
@@ -35,8 +38,8 @@ debug_data_file = os.path.join(FLAGS.data_dir, 'debug_data.pkl')
 def run_train_epoch(sess, model, dataset, epoch_num):
     print '='*79
     print 'Epoch: %s' % (epoch_num + 1)
-    prog = Progbar(target = dataset.split_num_batches(FLAGS.batch_size))
-    for i, batch in enumerate(dataset.get_shuffled_iterator(FLAGS.batch_size)):
+    prog = Progbar(target = dataset.split_num_batches(FLAGS.train_split, FLAGS.batch_size))
+    for i, batch in enumerate(dataset.get_shuffled_iterator(FLAGS.train_split, FLAGS.batch_size)):
         loss, summary = model.train_on_batch(sess, *batch)
         prog.update(i + 1, [('train loss', loss)])
     print '='*79
@@ -48,8 +51,8 @@ def run_eval_epoch(sess, model, dataset):
     preds = []
 
     print '-'*79
-    prog = Progbar(target=dataset.split_num_batches(FLAGS.batch_size))
-    for i, batch in enumerate(dataset.get_iterator(FLAGS.batch_size)):
+    prog = Progbar(target=dataset.split_num_batches(FLAGS.dev_split, FLAGS.batch_size))
+    for i, batch in enumerate(dataset.get_iterator(FLAGS.dev_split, FLAGS.batch_size)):
         acc, loss, pred = model.evaluate_on_batch(sess, *batch)
         prog.update(i + 1, [('loss', loss)])
 
@@ -102,7 +105,7 @@ def main(unused_argv):
 
     # Load the data file.
     dataset = Dataset(FLAGS.data_dir, FLAGS.input_type, FLAGS.preprocessor,
-                      FLAGS.mode, FLAGS.max_seq_len, vocab, regular_data_file,
+                      FLAGS.max_seq_len, vocab, regular_data_file,
                       debug_data_file, FLAGS.debug)
 
     with tf.Graph().as_default():
