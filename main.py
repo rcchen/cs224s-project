@@ -3,8 +3,7 @@ import os
 import tensorflow as tf
 import numpy as np
 
-import var.models
-
+from var.models import *
 from var.utils.dataset import Dataset
 from var.utils.progbar import Progbar
 from var.utils.vocab import Vocab
@@ -19,7 +18,12 @@ flags.DEFINE_string('input_type', 'essays', 'Input data feature type: either "es
                     "speech_transcriptions+ivectors" ')
 flags.DEFINE_string('preprocessor', 'tokenized', 'Name of directory with processed essay files.')
 flags.DEFINE_string('max_seq_len', 1000, 'Max number of words in an example.')
+flags.DEFINE_string('batch_size', 100, 'Number of examples to run in a batch.')
+flags.DEFINE_string('num_epochs', 50, 'Number of epochs to train for.')
 flags.DEFINE_string('debug', False, 'Run on debug mode, using a smaller data set.')
+
+# TODO: add model-saving capabilities
+flags.DEFINE_boolean("save", True, "Whether to save the model.")
 
 FLAGS = flags.FLAGS
 
@@ -28,43 +32,67 @@ regular_data_file = os.path.join(FLAGS.data_dir, 'data.pkl')
 debug_data_file = os.path.join(FLAGS.data_dir, 'debug_data.pkl')
 
 
-def train():
-    with tf.Session() as sess:
-        sess.run(tf.global_variables_initializer())
-        # TODO: Train the model on the data.
-        raise NotImplementedError
+def run_train_epoch(sess, model, dataset, epoch_num):
+    print '='*79
+    print 'Epoch: %s' % (epoch_num + 1)
+    prog = Progbar(target = dataset.split_num_batches(FLAGS.batch_size))
+    for i, batch in enumerate(dataset.get_shuffled_iterator(FLAGS.batch_size)):
+        loss, summary = model.train_on_batch(sess, *batch)
+        prog.update(i + 1, [('train loss', loss)])
+    print '='*79
 
 
-def test():
+def run_eval_epoch(sess, model, dataset):
+    batch_sizes = []
+    accuracies = []
+    preds = []
+
+    print '-'*79
+    prog = Progbar(target=dataset.split_num_batches(FLAGS.batch_size))
+    for i, batch in enumerate(dataset.get_iterator(FLAGS.batch_size)):
+        acc, loss, pred = model.evaluate_on_batch(sess, *batch)
+        prog.update(i + 1, [('%s loss' % loss)])
+
+        batch_sizes.append(batch[0].shape[0])
+        accuracies.append(acc)
+        preds.append(pred)
+
+    accuracy = np.average(accuracies, weights=batch_sizes)
+    print 'Accuracy: %s' % accuracy
+    print '-'*79
+    return accuracy, np.concatenate(preds)
+
+
+def train(model, dataset):
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
+        sess.run(tf.local_variables_initializer())
+        best_accuracy = 0
+        for epoch in range(FLAGS.num_epochs):
+            run_train_epoch(sess, model, dataset, epoch)
+            # TODO: evaluate on a split (train or dev)
+            dev_accuracy, _ = run_eval_epoch(sess, model, dataset)
+            if dev_accuracy > best_accuracy:
+                # TODO: Save the model, as it's optimal.
+                best_accuracy = dev_accuracy
+
+
+def test(model, dataset):
+    with tf.Session() as sess:
+        sess.run(tf.global_variables_initializer())
+        sess.run(tf.local_variables_initializer())
         # TODO: Evaluate the model on the data.
         raise NotImplementedError
 
 
-def get_model():
+def get_model(vocab, dataset):
+    kwargs = {
+        'batch_size': FLAGS.batch_size,
+        'max_seq_len': FLAGS.max_seq_len,
+        'num_classes': len(dataset.CLASS_LABELS)
+    }
     # TODO: Returns the correct corresponding model. Let's start with just SVM.
-
-    # BASELINE DETAILS
-    # Baseline uses tf.contrib.learn.SVM, a well-defined classifier. It takes in
-    # FeatureColumns, and we just call `fit` and `evaluate` on the classifier
-    # instance.
-
-    # TRAINING AND EVALUATING SVM
-    # `fit` represents an instance of training, and `evaluate` gives us both the
-    # loss and accuracy metrics. It uses SDCAOptimizer by default.
-
-    # DATA VECTORIZATION
-    # We will also need to implement something like a CountVectorizer. Right now
-    # our dataset wraps around a pandas DataFrame containing vocab indices of
-    # tokens from our dataset. While this will help us train our models on
-    # sequence-aware neural nets, SVM will need to use token counts instead.
-
-    # More information about SVM
-    # Documentation: https://www.tensorflow.org/api_docs/python/tf/contrib/learn/SVM
-    # Example usage: https://github.com/tensorflow/tensorflow/blob/r1.1/tensorflow/contrib/learn/python/learn/estimators/svm_test.py
-
-    return NotImplementedError
+    return LinearSvmModel(vocab, **kwargs)
 
 
 def main(unused_argv):
@@ -77,14 +105,24 @@ def main(unused_argv):
                       FLAGS.mode, FLAGS.max_seq_len, vocab, regular_data_file,
                       debug_data_file, FLAGS.debug)
 
-    # Load the model.
-    model = get_model()
-    model.build()
-
     with tf.Graph().as_default():
-        # TODO: Build the specified model and run it on the specified mode.
-        raise NotImplementedError
+
+        # Load the model.
+        print "Loading the model..."
+        model = get_model(vocab, dataset)
+        model.build()
+
+        # Run the model.
+        print "Running the model..."
+        if FLAGS.mode == 'train':
+            train(model, dataset)
+        elif FLAGS.mode == 'dev':
+            test(model, dataset, 'dev')
+        elif FLAGS.mode == 'test':
+            test(model, dataset, 'test')
+        else:
+            raise ValueError('Unrecognized mode: %s.' % FLAGS.mode)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     tf.app.run()
