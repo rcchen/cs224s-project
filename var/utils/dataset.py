@@ -1,4 +1,5 @@
 import csv
+import math
 import os
 import pickle
 
@@ -79,9 +80,7 @@ class Dataset(object):
 
     def _make_batch(self, df):
         # The sequence lengths are required in order to use Tensorflow's dynamic rnn functions correctly
-        return np.stack(df["s1_padded"]), np.stack(df["s1_len"]),\
-            np.stack(df["s2_padded"]), np.stack(df["s2_len"]),\
-            np.stack(df["l_int"])
+        return np.stack(df['features']), np.stack(df['lengths']), np.stack(df['labels'])
 
     def _make_iterator(self, df, batch_size):
         total_examples = len(df)
@@ -91,12 +90,12 @@ class Dataset(object):
             examples_read += batch_size
         yield self._make_batch(df[examples_read:])
 
-    def get_iterator(self, split, batch_size):
-        return self._make_iterator(self._dataframes[split], batch_size)
+    def get_iterator(self, batch_size):
+        return self._make_iterator(self._dataframes, batch_size)
 
-    def get_shuffled_iterator(self, split, batch_size):
-        df = self._dataframes[split]
+    def get_shuffled_iterator(self, batch_size):
+        df = self._dataframes
         return self._make_iterator(df.sample(len(df)), batch_size)
 
-    def split_num_batches(self, split, batch_size):
-        return int(math.ceil(float(len(self._dataframes[split]))/batch_size))
+    def split_num_batches(self, batch_size):
+        return int(math.ceil(float(len(self._dataframes)) / batch_size))

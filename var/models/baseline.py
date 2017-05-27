@@ -1,33 +1,17 @@
+import numpy as np
 import tensorflow as tf
 
 from model import NativeLanguageIdentificationModel
 from sklearn.feature_extraction.text import CountVectorizer
 from tensorflow.contrib.layers.python.layers import feature_column
 from tensorflow.contrib.learn.python.learn.estimators import svm
+from tensorflow.python.framework import constant_op
 
+# disable tensorflow warnings
+tf.logging.set_verbosity(tf.logging.ERROR)
 
 class LinearSvmModel(NativeLanguageIdentificationModel):
     """Model using classifier at tf.contrib.learn.SVM."""
-
-    # BASELINE DETAILS
-    # Baseline uses tf.contrib.learn.SVM, a well-defined classifier. It takes in
-    # FeatureColumns, and we just call `fit` and `evaluate` on the classifier
-    # instance.
-
-    # TRAINING AND EVALUATING SVM
-    # `fit` represents an instance of training, and `evaluate` gives us both the
-    # loss and accuracy metrics. It uses SDCAOptimizer by default.
-
-    # DATA VECTORIZATION
-    # We will also need to implement something like a CountVectorizer. Right now
-    # our dataset wraps around a pandas DataFrame containing vocab indices of
-    # tokens from our dataset. While this will help us train our models on
-    # sequence-aware neural nets, SVM will need to use token counts instead.
-
-    # More information about SVM
-    # Documentation: https://www.tensorflow.org/api_docs/python/tf/contrib/learn/SVM
-    # Example usage: https://github.com/tensorflow/tensorflow/blob/r1.1/tensorflow/contrib/learn/python/learn/estimators/svm_test.py
-
 
     def __init__(self, vocab, *args, **kwargs):
         super(LinearSvmModel, self).__init__(*args, **kwargs)
@@ -38,34 +22,48 @@ class LinearSvmModel(NativeLanguageIdentificationModel):
                                        l2_regularization=0.0)
 
     def get_feature_columns(self):
-        return [sparse_column_with_integerized_feature(vocab_index,
-                    bucket_size=self._max_seq_len)
-                    for vocab_index in range(self._vocab.size)]
-
-    def input_fn(self):
-        vectorizer = CountVectorizer(input='content',
-                                     vocabulary=self._vocab.token_id,
-                                     dtype=np.int64)
-        dt_matrix = vectorizer.fit_transform(self.essay_inputs_placeholder)
-        n_samples, n_features = dt_matrix.shape
-
-        # Some data sanity checks
-        assert n_samples == len(self.labels_placeholder)
-        assert n_features == self._vocab.size()
-
-        data = { i : dt_matrix[:, i] for i in range(n_features)}
-        data['example_id'] = range(n_samples)
-        return data, self.labels_placeholder
+        return [feature_column.real_valued_column(str(vocab_index))
+                    for vocab_index in range(self._vocab.size())]
 
     def add_prediction_op(self):
         # Predicts the labels.
-        return self._svm_classifier.predict(input_fn=self.input_fn)
+        # self.preds = self._svm_classifier.predict(input_fn=self.input_fn)
+        pass
+
+    def add_training_op(self):
+        pass
 
     def add_loss_op(self):
         # Evaluates our classifier on the batch data.
-        self._metrics = self._svm_classifier.evaluate(input_fn=input_fn, steps=1)
-        return self._metrics['loss']
+        pass
 
-    def add_training_op(self):
-        # Runs once through the batch data.
+    def train_on_batch(self, sess, essay_inputs_batch, essay_inputs_len_batch, labels_batch):
+
+        def input_fn():
+            dt_matrix = np.zeros((self._batch_size, self._vocab.size()))
+
+            # Transform the text input into a matrix of counts
+            for doc_index, input_length in zip(range(self._batch_size), essay_inputs_len_batch):
+                for input_index in range(input_length):
+                    word_index = essay_inputs_batch[doc_index, input_index]
+                    dt_matrix[doc_index, word_index] += 1
+
+            n_samples, n_features = dt_matrix.shape
+
+            # Some data sanity checks
+            assert n_samples == len(labels_batch)
+            assert n_features == self._vocab.size()
+
+            data = { str(i) : constant_op.constant(dt_matrix[:, i], dtype=np.int64) for i in range(n_features)}
+            data['example_id'] = constant_op.constant([ str(example_id) for example_id in range(n_samples) ])
+            return data, constant_op.constant(labels_batch)
+
         self._svm_classifier.fit(input_fn=input_fn, steps=1)
+        self._metrics = self._svm_classifier.evaluate(input_fn=input_fn, steps=1)
+
+        feed = self.create_feed_dict(labels_batch, essay_inputs_batch, None, None)
+        summary = sess.run(self.merged_summary_op, feed)
+        return self._metrics['loss'], summary
+
+    def build(self):
+        self.add_placeholders()

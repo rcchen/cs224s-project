@@ -1,14 +1,15 @@
 import tensorflow as tf
 
 class NativeLanguageIdentificationModel(object):
-     """Abstracts a Tensorflow graph for the NLI task."""
+    """Abstracts a Tensorflow graph for the NLI task."""
 
-     def __init__(self, batch_size, max_seq_len):
+    def __init__(self, batch_size, max_seq_len):
         # TODO: Initialize model with common private _variables, such as model
         # hyperparameters. Subclasses will call super(<SubClass>, self).__init__
         # to inherit this initialization method.
         self._batch_size = batch_size
         self._max_seq_len = max_seq_len
+
 
     def create_feed_dict(self, labels_batch, essay_inputs_batch, speech_transcription_inputs_batch, ivector_inputs_batch):
         """Creates the feed_dict for one step of training.
@@ -38,14 +39,14 @@ class NativeLanguageIdentificationModel(object):
         https://www.tensorflow.org/versions/r0.7/api_docs/python/io_ops.html#placeholders
         """
         self.labels_placeholder = tf.placeholder(tf.int64,\
-            shape=(self.batch_size), name='labels')
+            shape=(self._batch_size), name='labels')
         self.essay_inputs_placeholder = tf.placeholder(tf.int64, \
-            shape=(self.batch_size, self._max_seq_len), name='essay_inputs')
+            shape=(self._batch_size, self._max_seq_len), name='essay_inputs')
         self.speech_transcriptions_inputs_placeholder = tf.placeholder(tf.int64, \
-            shape=(self.batch_size, self._max_seq_len), name='speech_transcription_inputs')
+            shape=(self._batch_size, self._max_seq_len), name='speech_transcription_inputs')
         # TODO: Replace `None` with ivector dimension size
         self.ivector_inputs_placeholder = tf.placeholder(tf.int64, \
-            shape=(self.batch_size, None), name='ivector_inputs')
+            shape=(self._batch_size, None), name='ivector_inputs')
 
 
     def add_prediction_op(self):
@@ -66,7 +67,7 @@ class NativeLanguageIdentificationModel(object):
         Returns:
             loss: A 0-d tensor (scalar) output
         """
-        self.loss =
+        raise NotImplementedError
 
 
     def add_summary_op(self):
@@ -94,12 +95,8 @@ class NativeLanguageIdentificationModel(object):
         self.optimizer = tf.train.AdamOptimizer().minimize(self.loss)
 
 
-    def train_on_batch(self, sess, labels_batch, essay_inputs_batch,
-                       speech_transcription_inputs_batch,
-                       ivector_inputs_batch):
-        feed = self.create_feed_dict(labels_batch, essay_inputs_batch,
-                                     speech_transcription_inputs_batch,
-                                     ivector_inputs_batch)
+    def train_on_batch(self, sess, essay_inputs_batch, essay_inputs_len_batch, labels_batch):
+        feed = self.create_feed_dict(labels_batch, essay_inputs_batch, None, None)
         _, loss, summary = self.run([self.optimizer, self.loss,
                                      self.merged_summary_op], feed)
         return loss, summary
