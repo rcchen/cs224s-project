@@ -109,10 +109,12 @@ def main(unused_argv):
     with tf.Graph().as_default():
 
         # Load the model.
+        print "Loading the model..."
         model = get_model(vocab, dataset)
         model.build()
 
         # Run the model.
+        print "Running the model..."
         if FLAGS.mode == 'train':
             train(model, dataset)
         elif FLAGS.mode == 'dev':

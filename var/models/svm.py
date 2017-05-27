@@ -18,16 +18,18 @@ class LinearSvmModel(NativeLanguageIdentificationModel):
         e.g. for a single example: [1, 1, 2, 0] -> [1, 2, 1]
 
         """
-        with tf.variable_scope('inputs'), tf.Session().as_default():
+        with tf.variable_scope('inputs'):
             vocab_size = self._vocab.size()
             count_vectorizer = CountVectorizer(input='content',
                 vocabulary={ str(i): i for i in range(vocab_size) },  # input is already indexed!
                 lowercase=False, max_features=vocab_size)
 
-            counts = [ count_vectorizer.fit_transform((self.essay_inputs_placeholder[i, :]).eval())
+            # BUG: Cannot iterate over variable-length tensor. Must replace this or tf will complain.
+            counts = [ count_vectorizer.fit_transform(self.essay_inputs_placeholder[i, :])
                     for i in range(self._batch_size) ]
-            return tf.get_variable(name='counts_matrix', shape=(self._batch_size, vocab_size),
-                dtype=tf.int64, trainable=False, initializer=np.stack(counts))
+
+            return tf.get_variable(name='counts_matrix', dtype=tf.int64, trainable=False,
+                initializer=np.stack(counts))
 
 
     def add_prediction_op(self):

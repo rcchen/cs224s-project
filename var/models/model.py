@@ -39,15 +39,15 @@ class NativeLanguageIdentificationModel(object):
         See for more information:
         https://www.tensorflow.org/versions/r0.7/api_docs/python/io_ops.html#placeholders
         """
-        self.labels_placeholder = tf.placeholder(tf.int64,\
-            shape=(self._batch_size), name='labels')
+        self.labels_placeholder = tf.placeholder(tf.int64, shape=(None), name='labels')
+        # Investigate why this doesn't work with batch_size?
         self.essay_inputs_placeholder = tf.placeholder(tf.int64, \
-            shape=(self._batch_size, self._max_seq_len), name='essay_inputs')
+            shape=(None, self._max_seq_len), name='essay_inputs')
         self.speech_transcriptions_inputs_placeholder = tf.placeholder(tf.int64, \
-            shape=(self._batch_size, self._max_seq_len), name='speech_transcription_inputs')
+            shape=(None, self._max_seq_len), name='speech_transcription_inputs')
         # TODO: Replace `None` with ivector dimension size
         self.ivector_inputs_placeholder = tf.placeholder(tf.int64, \
-            shape=(self._batch_size, None), name='ivector_inputs')
+            shape=(None, None), name='ivector_inputs')
 
 
     def add_prediction_op(self):
@@ -58,24 +58,25 @@ class NativeLanguageIdentificationModel(object):
 
     def add_loss_op(self, pred, logits):
         """Adds Ops for the loss function to the computational graph."""
-        self.loss = (
+        loss = (
             tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(
                 logits=self.logits,
                 labels=self.labels_placeholder)
             )
             + tf.reduce_sum(sum(tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)))
         )
-        tf.summary.scalar("loss", self.loss)
+        tf.summary.scalar("loss", loss)
+        return loss
 
 
     def add_summary_op(self):
         """Adds Ops for the summary to the computational graph."""
-        self.merged_summary_op = tf.summary.merge_all()
+        return tf.summary.merge_all()
 
 
     def add_acc_op(self, preds):
         """Adds Ops for the accuracy to the computational graph."""
-        self.acc_op = tf.contrib.metrics.accuracy(self.preds, self.labels_placeholder)
+        return tf.contrib.metrics.accuracy(self.preds, self.labels_placeholder)
 
 
     def add_training_op(self, loss):
@@ -90,7 +91,7 @@ class NativeLanguageIdentificationModel(object):
         Returns:
             train_op: The Op for training.
         """
-        self.optimizer = tf.train.AdamOptimizer().minimize(self.loss)
+        return tf.train.AdamOptimizer().minimize(self.loss)
 
 
     def train_on_batch(self, sess, essay_inputs_batch, essay_inputs_len_batch, labels_batch):
