@@ -86,10 +86,10 @@ class Dataset(object):
         total_examples = len(df)
         examples_read = 0
         while examples_read + batch_size <= total_examples:
-            # BUGGY: fencepost error, with batch size.
             yield self._make_batch(df[examples_read:examples_read + batch_size])
             examples_read += batch_size
-        yield self._make_batch(df[examples_read:])
+        if examples_read < total_examples:  # there are still examples left to return
+            yield self._make_batch(df[examples_read:])
 
     def get_iterator(self, batch_size):
         return self._make_iterator(self._dataframes, batch_size)

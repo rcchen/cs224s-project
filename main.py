@@ -19,7 +19,7 @@ flags.DEFINE_string('input_type', 'essays', 'Input data feature type: either "es
 flags.DEFINE_string('preprocessor', 'tokenized', 'Name of directory with processed essay files.')
 flags.DEFINE_string('max_seq_len', 1000, 'Max number of words in an example.')
 flags.DEFINE_string('batch_size', 100, 'Number of examples to run in a batch.')
-flags.DEFINE_string('num_epochs', 50, 'Number of epochs to train for.')
+flags.DEFINE_string('num_epochs', 10, 'Number of epochs to train for.')
 flags.DEFINE_string('debug', False, 'Run on debug mode, using a smaller data set.')
 
 # TODO: add model-saving capabilities
@@ -51,7 +51,7 @@ def run_eval_epoch(sess, model, dataset):
     prog = Progbar(target=dataset.split_num_batches(FLAGS.batch_size))
     for i, batch in enumerate(dataset.get_iterator(FLAGS.batch_size)):
         acc, loss, pred = model.evaluate_on_batch(sess, *batch)
-        prog.update(i + 1, [('%s loss' % loss)])
+        prog.update(i + 1, [('loss', loss)])
 
         batch_sizes.append(batch[0].shape[0])
         accuracies.append(acc)
@@ -71,7 +71,7 @@ def train(model, dataset):
         for epoch in range(FLAGS.num_epochs):
             run_train_epoch(sess, model, dataset, epoch)
             # TODO: evaluate on a split (train or dev)
-            # dev_accuracy, _ = run_eval_epoch(sess, model, dataset)
+            dev_accuracy, _ = run_eval_epoch(sess, model, dataset)
             if dev_accuracy > best_accuracy:
                 # TODO: Save the model, as it's optimal.
                 best_accuracy = dev_accuracy

@@ -102,11 +102,9 @@ class NativeLanguageIdentificationModel(object):
         return loss, summary
 
 
-    def evaluate_on_batch(self, sess, labels_batch, essay_inputs_batch,
-                          speech_transcription_inputs_batch,
-                          ivector_inputs_batch):
+    def evaluate_on_batch(self, sess, essay_inputs_batch, essay_inputs_len_batch, labels_batch):
         feed = self.create_feed_dict(labels_batch, essay_inputs_batch)
-        accuracy, loss, predictions = sess.run([self.acc_op, self.loss, self.preds], feed)
+        accuracy, loss, predictions = sess.run([self.acc_op, self.loss, self.pred], feed)
         return accuracy, loss, predictions
 
 
