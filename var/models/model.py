@@ -98,7 +98,7 @@ class NativeLanguageIdentificationModel(object):
 
     def train_on_batch(self, sess, essay_inputs_batch, essay_inputs_len_batch, labels_batch):
         feed = self.create_feed_dict(labels_batch, essay_inputs_batch)
-        acc, loss, summary = sess.run([self.acc_op, self.loss, self.summary_op], feed)
+        _, loss, summary = sess.run([self.train_op, self.loss, self.summary_op], feed)
         return loss, summary
 
 

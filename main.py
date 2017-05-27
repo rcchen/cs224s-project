@@ -71,7 +71,7 @@ def train(model, dataset):
         for epoch in range(FLAGS.num_epochs):
             run_train_epoch(sess, model, dataset, epoch)
             # TODO: evaluate on a split (train or dev)
-            dev_accuracy, _ = run_eval_epoch(sess, model, dataset)
+            # dev_accuracy, _ = run_eval_epoch(sess, model, dataset)
             if dev_accuracy > best_accuracy:
                 # TODO: Save the model, as it's optimal.
                 best_accuracy = dev_accuracy

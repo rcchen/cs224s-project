@@ -86,6 +86,7 @@ class Dataset(object):
         total_examples = len(df)
         examples_read = 0
         while examples_read + batch_size <= total_examples:
+            # BUGGY: fencepost error, with batch size.
             yield self._make_batch(df[examples_read:examples_read + batch_size])
             examples_read += batch_size
         yield self._make_batch(df[examples_read:])
