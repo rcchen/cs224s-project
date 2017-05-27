@@ -38,7 +38,6 @@ def run_train_epoch(sess, model, dataset, epoch_num):
     prog = Progbar(target = dataset.split_num_batches(FLAGS.batch_size))
     for i, batch in enumerate(dataset.get_shuffled_iterator(FLAGS.batch_size)):
         loss, summary = model.train_on_batch(sess, *batch)
-        print 'train loss: %s' % loss
         prog.update(i + 1, [('train loss', loss)])
     print '='*79
 
