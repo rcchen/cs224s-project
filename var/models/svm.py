@@ -53,4 +53,4 @@ class LinearSvmModel(NativeLanguageIdentificationModel):
 
     # def add_loss_op(self, pred, logits):
         # Override with hinge loss, instead of default cross-entropy loss.
-        # return tf.losses.hinge_loss(labels=self.labels_placeholder, logits=logits)
+        # return tf.reduce_mean(tf.losses.hinge_loss(labels=self.labels_placeholder, logits=logits))
