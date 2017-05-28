@@ -10,30 +10,38 @@ from var.utils.vocab import Vocab
 
 flags = tf.app.flags
 
+# Running conditions
 flags.DEFINE_string('model', 'baseline', 'The name of the model to run.')
 flags.DEFINE_string('mode', 'train', 'Running mode: either "dev", "train", or "test"')
 flags.DEFINE_string('data_dir', 'var/data', 'The directory containing data files.')
+
+# Data parameters
 flags.DEFINE_string('input_type', 'essays', 'Input data feature type: either "essays", \
                     "speech_transcriptions", "ivectors", or \
                     "speech_transcriptions+ivectors" ')
 flags.DEFINE_string('preprocessor', 'tokenized', 'Name of directory with processed essay files.')
-flags.DEFINE_string('max_seq_len', 1000, 'Max number of words in an example.')
+flags.DEFINE_string('ngram_lengths', '0,2,3,4', 'Comma-separated list of n-gram sizes to use as features.')
+
+# Model hyperparameters
+flags.DEFINE_string('max_seq_len', 10000, 'Max number of words in an example.')
 flags.DEFINE_string('batch_size', 100, 'Number of examples to run in a batch.')
 flags.DEFINE_string('num_epochs', 10, 'Number of epochs to train for.')
-flags.DEFINE_string('debug', False, 'Run on debug mode, using a smaller data set.')
 
+# Training and testing
 flags.DEFINE_string('train_split', 'train', 'Split to train the model on.')
 flags.DEFINE_string('dev_split', 'dev', 'Split to evaluate the model on.')
-
 flags.DEFINE_boolean('save', True, 'Whether to save the model.')
+
+# TODO: use or delete this.
+flags.DEFINE_string('debug', False, 'Run on debug mode, using a smaller data set.')
 
 FLAGS = flags.FLAGS
 
-vocab_file = os.path.join(FLAGS.data_dir, 'vocab.txt')
-regular_data_file = os.path.join(FLAGS.data_dir, 'data.pkl')
-debug_data_file = os.path.join(FLAGS.data_dir, 'debug_data.pkl')
-# TODO: Customize checkpoint path to so that we can later save multiple
-# checkpoints for a single model, but w/ different hyperparameters.
+# File paths
+vocab_file = os.path.join(FLAGS.data_dir, 'vocab_ngrams-%s.txt' % FLAGS.ngram_lengths)
+data_file = os.path.join(FLAGS.data_dir, '%s_%s_ngrams-%s_data.pkl' % 
+    (FLAGS.input_type, FLAGS.preprocessor, FLAGS.ngram_lengths))
+# TODO: Customize path so that we can save and load 1< checkpoints for a single model, w/ different hyperparameters.
 checkpoint_dir = os.path.join(FLAGS.data_dir, 'checkpoints')
 checkpoint_path = os.path.join(checkpoint_dir, '%s_model.ckpt' % FLAGS.model)
 
@@ -101,7 +109,7 @@ def test(model, dataset):
 def get_model(vocab, dataset):
     kwargs = {
         'batch_size': FLAGS.batch_size,
-        'max_seq_len': FLAGS.max_seq_len,
+        'max_seq_len': vocab.size(), # size of dataset
         'num_classes': len(dataset.CLASS_LABELS)
     }
     # TODO: Returns the correct corresponding model. Let's start with just SVM.
@@ -111,12 +119,12 @@ def get_model(vocab, dataset):
 def main(unused_argv):
 
     # Load the vocabulary file.
-    vocab = Vocab(vocab_file, os.path.join(FLAGS.data_dir, FLAGS.input_type))
+    ngram_lengths = [int(i) for i in FLAGS.ngram_lengths.split(',')]
+    vocab = Vocab(vocab_file, os.path.join(FLAGS.data_dir, FLAGS.input_type), ngram_lengths)
 
     # Load the data file.
     dataset = Dataset(FLAGS.data_dir, FLAGS.input_type, FLAGS.preprocessor,
-                      FLAGS.max_seq_len, vocab, regular_data_file,
-                      debug_data_file, FLAGS.debug)
+                      FLAGS.max_seq_len, vocab, data_file, ngram_lengths)
 
     with tf.Graph().as_default():
 
