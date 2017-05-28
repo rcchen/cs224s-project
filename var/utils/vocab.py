@@ -95,7 +95,11 @@ class Vocab(object):
         if n == 0:  # special case: tokenize by word
             return word_tokenize(text)
         if len(text) < n:
-            return [text]
+            stripped_text = text.strip()
+            if len(stripped_text) != 0:
+                return [stripped_text]
+            else:
+                return []
         sentences = [line.strip() for line in text.split('\n')]
         tokens = []
         for sentence in sentences:
