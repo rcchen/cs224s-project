@@ -21,11 +21,8 @@ class Dataset(object):
                  preprocessor,      # e.g. 'tokenized'
                  max_seq_len,       # max length of a sequence to ingest
                  vocab,             # Vocabulary instance
-                 regular_data_file,
-                 debug_data_file,
-                 debug):
+                 data_file):
 
-        data_file = debug_data_file if debug else regular_data_file
         if os.path.isfile(data_file):
             with open(data_file, 'r') as f:
                 self._dataframes = pickle.load(f)

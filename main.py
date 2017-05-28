@@ -10,30 +10,37 @@ from var.utils.vocab import Vocab
 
 flags = tf.app.flags
 
+# Running conditions
 flags.DEFINE_string('model', 'baseline', 'The name of the model to run.')
 flags.DEFINE_string('mode', 'train', 'Running mode: either "dev", "train", or "test"')
 flags.DEFINE_string('data_dir', 'var/data', 'The directory containing data files.')
+
+# Data parameters
 flags.DEFINE_string('input_type', 'essays', 'Input data feature type: either "essays", \
                     "speech_transcriptions", "ivectors", or \
                     "speech_transcriptions+ivectors" ')
 flags.DEFINE_string('preprocessor', 'tokenized', 'Name of directory with processed essay files.')
+
+# Model hyperparameters
 flags.DEFINE_string('max_seq_len', 1000, 'Max number of words in an example.')
 flags.DEFINE_string('batch_size', 100, 'Number of examples to run in a batch.')
 flags.DEFINE_string('num_epochs', 10, 'Number of epochs to train for.')
-flags.DEFINE_string('debug', False, 'Run on debug mode, using a smaller data set.')
 
+# Training and testing
 flags.DEFINE_string('train_split', 'train', 'Split to train the model on.')
 flags.DEFINE_string('dev_split', 'dev', 'Split to evaluate the model on.')
-
 flags.DEFINE_boolean('save', True, 'Whether to save the model.')
+
+# TODO: use or delete this.
+flags.DEFINE_string('debug', False, 'Run on debug mode, using a smaller data set.')
 
 FLAGS = flags.FLAGS
 
+# File paths
 vocab_file = os.path.join(FLAGS.data_dir, 'vocab.txt')
-regular_data_file = os.path.join(FLAGS.data_dir, 'data.pkl')
-debug_data_file = os.path.join(FLAGS.data_dir, 'debug_data.pkl')
-# TODO: Customize checkpoint path to so that we can later save multiple
-# checkpoints for a single model, but w/ different hyperparameters.
+data_file = os.path.join(FLAGS.data_dir, '%s_%s_data.pkl' % 
+    (FLAGS.input_type, FLAGS.preprocessor))
+# TODO: Customize path so that we can save and load 1< checkpoints for a single model, w/ different hyperparameters.
 checkpoint_dir = os.path.join(FLAGS.data_dir, 'checkpoints')
 checkpoint_path = os.path.join(checkpoint_dir, '%s_model.ckpt' % FLAGS.model)
 
@@ -115,8 +122,7 @@ def main(unused_argv):
 
     # Load the data file.
     dataset = Dataset(FLAGS.data_dir, FLAGS.input_type, FLAGS.preprocessor,
-                      FLAGS.max_seq_len, vocab, regular_data_file,
-                      debug_data_file, FLAGS.debug)
+                      FLAGS.max_seq_len, vocab, data_file)
 
     with tf.Graph().as_default():
 
