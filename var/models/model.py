@@ -24,7 +24,6 @@ class NativeLanguageIdentificationModel(object):
 
         feed_dict[self.labels_placeholder] = labels_batch
         feed_dict[self.essay_inputs_placeholder] = essay_inputs_batch
-
         # TODO: Add in transcriptions, ivectors.
         # feed_dict[self.speech_transcriptions_inputs_placeholder] = speech_transcription_inputs_batch
         # feed_dict[self.ivector_inputs_placeholder] = ivector_inputs_batch

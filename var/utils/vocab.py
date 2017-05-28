@@ -2,11 +2,11 @@
 
 import os, glob, json
 from collections import Counter
-from nltk.tokenize import word_tokenize
+from nltk.tokenize import word_tokenize, sent_tokenize
 
 class Vocab(object):
 
-    def __init__(self, vocab_file, dataset_path, max_vocab_size=10000):
+    def __init__(self, vocab_file, dataset_path, ngram_lengths, max_vocab_size=10000):
         self.token_id = {}
         self.id_token = {}
         self.PAD_ID = 0
@@ -17,7 +17,7 @@ class Vocab(object):
         if os.path.isfile(vocab_file) and os.path.getsize(vocab_file) > 0:
             self.load_vocab_from_file(vocab_file)
         elif dataset_path:
-            self.create_vocab(dataset_path, vocab_file, max_vocab_size)
+            self.create_vocab(dataset_path, vocab_file, max_vocab_size, ngram_lengths)
             self.load_vocab_from_file(vocab_file)
         else:
             raise Exception("must provide either an already constructed vocab file, or a dataset to build it from.")
@@ -37,14 +37,15 @@ class Vocab(object):
             self.token_id[token] = idx
             self.id_token[idx] = token
 
-    def create_vocab(self, dataset_path, vocab_file, max_vocab_size):
+    def create_vocab(self, dataset_path, vocab_file, max_vocab_size, ngram_lengths):
 
         print("generating vocab from dataset at {}".format(dataset_path))
         all_words = []
         for filename in glob.glob(os.path.join(dataset_path, '*', 'tokenized',
                                                '*.txt')):
             with open(filename, 'r') as f:
-                all_words += word_tokenize(f.read().lower())
+                for ngram_length in ngram_lengths:
+                    all_words += self.tokenize_ngrams(f.read().lower(), ngram_length)
 
         counter = Counter(all_words)
         count_pairs = sorted(counter.items(), key=lambda x : (-x[1], x[0]))
@@ -71,8 +72,11 @@ class Vocab(object):
     def ids_for_tokens(self, tokens):
         return [self.id_for_token(t) for t in tokens]
 
-    def ids_for_sentence(self, sentence):
-        return self.ids_for_tokens(word_tokenize(sentence.lower()))
+    def ids_for_sentence(self, sentence, ngram_lengths):
+        ids = []
+        for ngram_length in ngram_lengths:
+            ids += self.ids_for_tokens(self.tokenize_ngrams(sentence.lower(), ngram_length))
+        return ids
 
     def token_for_id(self, id):
 
@@ -85,3 +89,15 @@ class Vocab(object):
 
     def tokens_for_ids(self, ids):
         return [self.token_for_id(x) for x in ids]
+
+    @staticmethod
+    def tokenize_ngrams(text, n):
+        if n == 0:  # special case: tokenize by word
+            return word_tokenize(text)
+        if len(text) < n:
+            return [text]
+        sentences = [line.strip() for line in text.split('\n')]
+        tokens = []
+        for sentence in sentences:
+            tokens += [sentence[i:i+n] for i in range(len(sentence) - n)]
+        return tokens
