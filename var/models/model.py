@@ -67,7 +67,7 @@ class NativeLanguageIdentificationModel(object):
             )
             + tf.cast(tf.reduce_sum(sum(tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES))), tf.float64)
         )
-        tf.summary.scalar("loss", loss)
+        tf.summary.scalar('loss', loss)
         return loss
 
 

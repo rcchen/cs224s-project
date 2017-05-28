@@ -12,13 +12,6 @@ def transform_inputs_to_count_vector(vocab_size, essay_inputs):
     e.g. for a single example: [1, 1, 2, 0] -> [1, 2, 1]
 
     """
-    # count_vectorizer = CountVectorizer(input='content',
-    #                                    vocabulary=[ str(i) for i in range(vocab_size) ],  # input is already indexed!
-    #                                    lowercase=False,
-    #                                    max_features=vocab_size,
-    #                                    dtype=np.int64)
-
-    # print count_vectorizer.fit_transform(''.join(essay_inputs[1, :]))
 
     def transform_row_to_count_vector(index, row):
         counts = collections.Counter(row)
@@ -27,11 +20,11 @@ def transform_inputs_to_count_vector(vocab_size, essay_inputs):
             vec[ind] = count
         return vec
 
-
     counts = [ transform_row_to_count_vector(index, essay_inputs[index, :])
             for index in range(essay_inputs.shape[0]) ]
-
+    
     return np.stack(counts)
+
 
 class LinearSvmModel(NativeLanguageIdentificationModel):
 
@@ -51,6 +44,9 @@ class LinearSvmModel(NativeLanguageIdentificationModel):
             return preds, logits
 
 
-    # def add_loss_op(self, pred, logits):
+    def add_loss_op(self, pred, logits):
         # Override with hinge loss, instead of default cross-entropy loss.
-        # return tf.reduce_mean(tf.losses.hinge_loss(labels=self.labels_placeholder, logits=logits))
+        labels = tf.one_hot(indices=self.labels_placeholder, depth=self._num_classes)
+        loss = tf.reduce_mean(tf.losses.hinge_loss(labels, logits))
+        tf.summary.scalar('loss', loss)
+        return loss
