@@ -25,14 +25,20 @@ flags.DEFINE_string('debug', False, 'Run on debug mode, using a smaller data set
 flags.DEFINE_string('train_split', 'train', 'Split to train the model on.')
 flags.DEFINE_string('dev_split', 'dev', 'Split to evaluate the model on.')
 
-# TODO: add model-saving capabilities
-flags.DEFINE_boolean("save", True, "Whether to save the model.")
+flags.DEFINE_boolean('save', True, 'Whether to save the model.')
 
 FLAGS = flags.FLAGS
 
 vocab_file = os.path.join(FLAGS.data_dir, 'vocab.txt')
 regular_data_file = os.path.join(FLAGS.data_dir, 'data.pkl')
 debug_data_file = os.path.join(FLAGS.data_dir, 'debug_data.pkl')
+# TODO: Customize checkpoint path to so that we can later save multiple
+# checkpoints for a single model, but w/ different hyperparameters.
+checkpoint_dir = os.path.join(FLAGS.data_dir, 'checkpoints')
+checkpoint_path = os.path.join(checkpoint_dir, '%s_model.ckpt' % FLAGS.model)
+
+if not os.path.isdir(checkpoint_dir):
+    os.mkdir(checkpoint_dir)
 
 
 def run_train_epoch(sess, model, dataset, epoch_num):
@@ -41,6 +47,7 @@ def run_train_epoch(sess, model, dataset, epoch_num):
     prog = Progbar(target = dataset.split_num_batches(FLAGS.train_split, FLAGS.batch_size))
     for i, batch in enumerate(dataset.get_shuffled_iterator(FLAGS.train_split, FLAGS.batch_size)):
         loss, summary = model.train_on_batch(sess, *batch)
+        # TODO: Write summaries.
         prog.update(i + 1, [('train loss', loss)])
     print '='*79
 
@@ -67,25 +74,28 @@ def run_eval_epoch(sess, model, dataset):
 
 
 def train(model, dataset):
+    if FLAGS.save:
+        saver = tf.train.Saver(max_to_keep=1)
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
         sess.run(tf.local_variables_initializer())
         best_accuracy = 0
         for epoch in range(FLAGS.num_epochs):
             run_train_epoch(sess, model, dataset, epoch)
-            # TODO: evaluate on a split (train or dev)
             dev_accuracy, _ = run_eval_epoch(sess, model, dataset)
             if dev_accuracy > best_accuracy:
-                # TODO: Save the model, as it's optimal.
+                saver.save(sess, checkpoint_path)
                 best_accuracy = dev_accuracy
 
 
 def test(model, dataset):
+    saver = tf.train.Saver()
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
         sess.run(tf.local_variables_initializer())
-        # TODO: Evaluate the model on the data.
-        raise NotImplementedError
+        saver.restore(sess, checkpoint_path)
+        run_eval_epoch(sess, model, dataset)
+        # TODO: store predictions for analysis.
 
 
 def get_model(vocab, dataset):
@@ -120,9 +130,9 @@ def main(unused_argv):
         if FLAGS.mode == 'train':
             train(model, dataset)
         elif FLAGS.mode == 'dev':
-            test(model, dataset, 'dev')
+            test(model, dataset)
         elif FLAGS.mode == 'test':
-            test(model, dataset, 'test')
+            test(model, dataset)
         else:
             raise ValueError('Unrecognized mode: %s.' % FLAGS.mode)
 
