@@ -1,4 +1,3 @@
-
 # Project-specific
 vocab.txt
 data
@@ -103,3 +102,6 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+# vscode
+.vscode
