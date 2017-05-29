@@ -23,9 +23,10 @@ flags.DEFINE_string('preprocessor', 'tokenized', 'Name of directory with process
 flags.DEFINE_string('ngram_lengths', '0,2,3,4', 'Comma-separated list of n-gram sizes to use as features.')
 
 # Model hyperparameters
-flags.DEFINE_string('max_seq_len', 10000, 'Max number of words in an example.')
+flags.DEFINE_string('max_seq_len', 1000, 'Max number of words in an example.')
 flags.DEFINE_string('batch_size', 100, 'Number of examples to run in a batch.')
 flags.DEFINE_string('num_epochs', 10, 'Number of epochs to train for.')
+flags.DEFINE_string('hidden_size', 100, 'Hidden size of RNN cells.')
 
 # Training and testing
 flags.DEFINE_string('train_split', 'train', 'Split to train the model on.')
@@ -112,8 +113,13 @@ def get_model(vocab, dataset):
         'max_seq_len': vocab.size(), # size of dataset
         'num_classes': len(dataset.CLASS_LABELS)
     }
-    # TODO: Returns the correct corresponding model. Let's start with just SVM.
-    return LinearSvmModel(vocab, **kwargs)
+
+    if FLAGS.model == 'baseline':
+        return LinearSvmModel(vocab, **kwargs)
+    elif FLAGS.model == 'rnn':
+        return RnnModel(vocab, FLAGS.hidden_size, **kwargs)
+    else:
+        raise ValueError("Unrecognized model: %s." % FLAGS.model)
 
 
 def main(unused_argv):
