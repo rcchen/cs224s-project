@@ -1,12 +1,13 @@
+from datetime import datetime
 import os
 
 import tensorflow as tf
 import numpy as np
 
-from var.models import *
-from var.utils.dataset import Dataset
-from var.utils.progbar import Progbar
-from var.utils.vocab import Vocab
+from src.models import *
+from src.utils.dataset import Dataset
+from src.utils.progbar import Progbar
+from src.utils.vocab import Vocab
 
 flags = tf.app.flags
 
@@ -14,6 +15,7 @@ flags = tf.app.flags
 flags.DEFINE_string('model', 'baseline', 'The name of the model to run.')
 flags.DEFINE_string('mode', 'train', 'Running mode: either "dev", "train", or "test"')
 flags.DEFINE_string('data_dir', 'var/data', 'The directory containing data files.')
+flags.DEFINE_string('output_dir', 'output', 'The directory for output to go.')
 
 # Data parameters
 flags.DEFINE_string('input_type', 'essays', 'Input data feature type: either "essays", \
@@ -39,15 +41,21 @@ flags.DEFINE_string('debug', False, 'Run on debug mode, using a smaller data set
 FLAGS = flags.FLAGS
 
 # File paths
-vocab_file = os.path.join(FLAGS.data_dir, 'vocab_ngrams-%s.txt' % FLAGS.ngram_lengths)
-data_file = os.path.join(FLAGS.data_dir, '%s_%s_ngrams-%s_data.pkl' % 
+vocab_dir = os.path.join(FLAGS.output_dir, 'vocabs')
+vocab_file = os.path.join(vocab_dir, 'ngrams-%s.txt' % FLAGS.ngram_lengths)
+pickle_dir = os.path.join(FLAGS.output_dir, 'pickles')
+pickle_file = os.path.join(pickle_dir, '%s_%s_ngrams-%s_data.pkl' % 
     (FLAGS.input_type, FLAGS.preprocessor, FLAGS.ngram_lengths))
 # TODO: Customize path so that we can save and load 1< checkpoints for a single model, w/ different hyperparameters.
-checkpoint_dir = os.path.join(FLAGS.data_dir, 'checkpoints')
+checkpoint_dir = os.path.join(FLAGS.output_dir, 'checkpoints')
 checkpoint_path = os.path.join(checkpoint_dir, '%s_model.ckpt' % FLAGS.model)
+predictions_dir = os.path.join(FLAGS.output_dir, 'predictions')
 
-if not os.path.isdir(checkpoint_dir):
-    os.mkdir(checkpoint_dir)
+# Ensure that all necessary output directories exist.
+output_dirs = [FLAGS.output_dir, vocab_dir, pickle_dir, checkpoint_dir, predictions_dir]
+for d in output_dirs:
+    if not os.path.isdir(d):
+        os.mkdir(d)
 
 
 def run_train_epoch(sess, model, dataset, epoch_num):
@@ -91,10 +99,12 @@ def train(model, dataset):
         best_accuracy = 0
         for epoch in range(FLAGS.num_epochs):
             run_train_epoch(sess, model, dataset, epoch)
-            dev_accuracy, _ = run_eval_epoch(sess, model, dataset)
+            dev_accuracy, predictions = run_eval_epoch(sess, model, dataset)
             if dev_accuracy > best_accuracy:
                 saver.save(sess, checkpoint_path)
                 best_accuracy = dev_accuracy
+            timestamp = datetime.utcnow().strftime("%s")
+            np.savetxt("%s/%s/%s.csv" % (predictions_dir, FLAGS.mode, timestamp), predictions, delimiter=",")       
 
 
 def test(model, dataset):
@@ -103,9 +113,9 @@ def test(model, dataset):
         sess.run(tf.global_variables_initializer())
         sess.run(tf.local_variables_initializer())
         saver.restore(sess, checkpoint_path)
-        run_eval_epoch(sess, model, dataset)
-        # TODO: store predictions for analysis.
-
+        _, predictions = run_eval_epoch(sess, model, dataset)
+        timestamp = datetime.utcnow().strftime("%s")
+        np.savetxt("%s/%s/%s.csv" % (predictions_dir, FLAGS.mode, timestamp), predictions, delimiter=",")       
 
 def get_model(vocab, dataset):
     kwargs = {
@@ -129,7 +139,7 @@ def main(unused_argv):
 
     # Load the data file.
     dataset = Dataset(FLAGS.data_dir, FLAGS.input_type, FLAGS.preprocessor,
-                      FLAGS.max_seq_len, vocab, data_file, ngram_lengths)
+                      FLAGS.max_seq_len, vocab, pickle_file, ngram_lengths)
 
     with tf.Graph().as_default():
 
