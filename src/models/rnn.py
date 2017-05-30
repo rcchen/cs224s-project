@@ -30,11 +30,11 @@ class RnnModel(NativeLanguageIdentificationModel):
                 initializer=tf.contrib.layers.xavier_initializer()  # TODO: consider different initializers
             )
 
+
             projected_embedding_inputs = tf.layers.dense(embedded_inputs,
                 self._hidden_size,
                 kernel_initializer=tf.contrib.layers.xavier_initializer(),  # TODO: consider different initializers
                 name="prem_proj")
-
             # TODO: apply sequence length, or else the RNN will loop over padded indices
             outputs, _ = tf.nn.dynamic_rnn(cell, embedded_inputs, dtype=tf.float64)
 
