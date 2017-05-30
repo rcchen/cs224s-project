@@ -51,8 +51,11 @@ checkpoint_dir = os.path.join(FLAGS.output_dir, 'checkpoints')
 checkpoint_path = os.path.join(checkpoint_dir, '%s_model.ckpt' % FLAGS.model)
 predictions_dir = os.path.join(FLAGS.output_dir, 'predictions')
 
-if not os.path.isdir(checkpoint_dir):
-    os.mkdir(checkpoint_dir)
+# Ensure that all necessary output directories exist.
+output_dirs = [FLAGS.output_dir, vocab_dir, pickle_dir, checkpoint_dir, predictions_dir]
+for d in output_dirs:
+    if not os.path.isdir(d):
+        os.mkdir(d)
 
 
 def run_train_epoch(sess, model, dataset, epoch_num):
