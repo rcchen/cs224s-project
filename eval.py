@@ -16,7 +16,7 @@ def evaluate(labels, predictions):
     y_pred = np.array([Dataset.CLASS_LABELS[i] for i in y_pred_indices])
 
     cm = ConfusionMatrix(y_true, y_pred)
-    print cm
+    cm.print_stats()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
