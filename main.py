@@ -93,7 +93,12 @@ def run_eval_epoch(sess, model, dataset):
 def train(model, dataset):
     if FLAGS.save:
         saver = tf.train.Saver(max_to_keep=1)
-    with tf.Session() as sess:
+
+    # Allow GPU memory growth
+    config = tf.ConfigProto()
+    config.gpu_options.allow_growth = True
+
+    with tf.Session(config=config) as sess:
         sess.run(tf.global_variables_initializer())
         sess.run(tf.local_variables_initializer())
         best_accuracy = 0
