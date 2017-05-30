@@ -1,3 +1,4 @@
+from datetime import datetime
 import os
 
 import tensorflow as tf
@@ -24,9 +25,9 @@ flags.DEFINE_string('preprocessor', 'tokenized', 'Name of directory with process
 flags.DEFINE_string('ngram_lengths', '0,2,3,4', 'Comma-separated list of n-gram sizes to use as features.')
 
 # Model hyperparameters
-flags.DEFINE_string('max_seq_len', 10000, 'Max number of words in an example.')
-flags.DEFINE_string('batch_size', 100, 'Number of examples to run in a batch.')
-flags.DEFINE_string('num_epochs', 10, 'Number of epochs to train for.')
+flags.DEFINE_integer('max_seq_len', 10000, 'Max number of words in an example.')
+flags.DEFINE_integer('batch_size', 100, 'Number of examples to run in a batch.')
+flags.DEFINE_integer('num_epochs', 10, 'Number of epochs to train for.')
 
 # Training and testing
 flags.DEFINE_string('train_split', 'train', 'Split to train the model on.')
@@ -47,6 +48,7 @@ pickle_file = os.path.join(pickle_dir, '%s_%s_ngrams-%s_data.pkl' %
 # TODO: Customize path so that we can save and load 1< checkpoints for a single model, w/ different hyperparameters.
 checkpoint_dir = os.path.join(FLAGS.output_dir, 'checkpoints')
 checkpoint_path = os.path.join(checkpoint_dir, '%s_model.ckpt' % FLAGS.model)
+predictions_dir = os.path.join(FLAGS.output_dir, 'predictions')
 
 if not os.path.isdir(checkpoint_dir):
     os.mkdir(checkpoint_dir)
@@ -93,10 +95,12 @@ def train(model, dataset):
         best_accuracy = 0
         for epoch in range(FLAGS.num_epochs):
             run_train_epoch(sess, model, dataset, epoch)
-            dev_accuracy, _ = run_eval_epoch(sess, model, dataset)
+            dev_accuracy, predictions = run_eval_epoch(sess, model, dataset)
             if dev_accuracy > best_accuracy:
                 saver.save(sess, checkpoint_path)
                 best_accuracy = dev_accuracy
+            timestamp = datetime.utcnow().strftime("%s")
+            np.savetxt("%s/%s/%s.csv" % (predictions_dir, FLAGS.mode, timestamp), predictions, delimiter=",")       
 
 
 def test(model, dataset):
@@ -105,9 +109,9 @@ def test(model, dataset):
         sess.run(tf.global_variables_initializer())
         sess.run(tf.local_variables_initializer())
         saver.restore(sess, checkpoint_path)
-        run_eval_epoch(sess, model, dataset)
-        # TODO: store predictions for analysis.
-
+        _, predictions = run_eval_epoch(sess, model, dataset)
+        timestamp = datetime.utcnow().strftime("%s")
+        np.savetxt("%s/%s/%s.csv" % (predictions_dir, FLAGS.mode, timestamp), predictions, delimiter=",")       
 
 def get_model(vocab, dataset):
     kwargs = {
