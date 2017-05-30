@@ -3,7 +3,6 @@ import numpy as np
 import tensorflow as tf
 
 from model import NativeLanguageIdentificationModel
-from sklearn.feature_extraction.text import CountVectorizer
 
 def transform_inputs_to_count_vector(vocab_size, essay_inputs):
     """Transforms our placeholder inputs to count representations rather than
