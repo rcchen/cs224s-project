@@ -30,11 +30,10 @@ class MultilayerNeuralNetModel(NativeLanguageIdentificationModel):
                                  kernel_regularizer=tf.contrib.layers.l2_regularizer(self._l2_reg),
                                  activation=tf.tanh, name='h2')
 
-            h3 = tf.layers.dense(h2, self._num_classes,
+            logits = tf.layers.dense(h2, self._num_classes,
                                  kernel_initializer=tf.contrib.layers.xavier_initializer(),
                                  kernel_regularizer=tf.contrib.layers.l2_regularizer(self._l2_reg),
-                                 activation=tf.tanh, name='h3')
+                                 activation=tf.tanh, name='logits')
 
-            logits = tf.nn.softmax(h3, name='logits')
             preds = tf.argmax(logits, axis=1)
             return preds, logits

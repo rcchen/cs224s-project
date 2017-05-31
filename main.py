@@ -52,6 +52,8 @@ vocab_file = os.path.join(vocab_dir, 'ngrams-%s.txt' % FLAGS.ngram_lengths)
 pickle_dir = os.path.join(FLAGS.output_dir, 'pickles')
 pickle_file = os.path.join(pickle_dir, '%s_%s_ngrams-%s_data.pkl' % 
     (FLAGS.input_type, FLAGS.preprocessor, FLAGS.ngram_lengths))
+summary_dir = os.path.join(FLAGS.output_dir, 'tensorboard')
+
 # TODO: Customize path so that we can save and load 1< checkpoints for a single model, w/ different hyperparameters.
 checkpoint_dir = os.path.join(FLAGS.output_dir, 'checkpoints')
 checkpoint_path = os.path.join(checkpoint_dir, '%s_model.ckpt' % FLAGS.model)
@@ -64,13 +66,13 @@ for d in output_dirs:
         os.mkdir(d)
 
 
-def run_train_epoch(sess, model, dataset, epoch_num):
+def run_train_epoch(sess, model, dataset, epoch_num, summary_writer):
     print '='*79
     print 'Epoch: %s' % (epoch_num + 1)
     prog = Progbar(target = dataset.split_num_batches(FLAGS.train_split, FLAGS.batch_size))
     for i, batch in enumerate(dataset.get_shuffled_iterator(FLAGS.train_split, FLAGS.batch_size)):
         loss, summary = model.train_on_batch(sess, *batch)
-        # TODO: Write summaries.
+        summary_writer.add_summary(summary, global_step=epoch_num * dataset.split_size(FLAGS.train_split) + i)
         prog.update(i + 1, [('train loss', loss)])
     print '='*79
 
@@ -107,9 +109,11 @@ def train(model, dataset):
     with tf.Session(config=config) as sess:
         sess.run(tf.global_variables_initializer())
         sess.run(tf.local_variables_initializer())
+        summary_writer = tf.summary.FileWriter(summary_dir, sess.graph)
+
         best_accuracy = 0
         for epoch in range(FLAGS.num_epochs):
-            run_train_epoch(sess, model, dataset, epoch)
+            run_train_epoch(sess, model, dataset, epoch, summary_writer)
             dev_accuracy, predictions = run_eval_epoch(sess, model, dataset)
             if dev_accuracy > best_accuracy:
                 saver.save(sess, checkpoint_path)
