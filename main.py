@@ -24,11 +24,11 @@ flags.DEFINE_string('input_type', 'essays', 'Input data feature type: either "es
 flags.DEFINE_string('preprocessor', 'tokenized', 'Name of directory with processed essay files.')
 flags.DEFINE_string('ngram_lengths', '0,3', 'Comma-separated list of n-gram sizes to use as features.')
 
-flags.DEFINE_integer('max_seq_len', 10000, 'Max number of words in an example.')
+flags.DEFINE_integer('max_seq_len', 1e4, 'Max number of words in an example.')
 flags.DEFINE_integer('batch_size', 100, 'Number of examples to run in a batch.')
 flags.DEFINE_integer('num_epochs', 10, 'Number of epochs to train for.')
 flags.DEFINE_integer('embedding_size', 16, 'Size of trainable embeddings, applicable for char-gram embedding models.')
-flags.DEFINE_integer('hidden_size', 200, 'Number of cells in a neural network layer.')
+flags.DEFINE_integer('hidden_size', 1e6, 'Number of cells in a neural network layer.')
 
 # Training and testing
 flags.DEFINE_string('train_split', 'train', 'Split to train the model on.')

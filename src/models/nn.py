@@ -31,9 +31,9 @@ class MultilayerNeuralNetModel(NativeLanguageIdentificationModel):
                                  activation=tf.tanh, name='h2')
 
             logits = tf.layers.dense(h2, self._num_classes,
-                                 kernel_initializer=tf.contrib.layers.xavier_initializer(),
-                                 kernel_regularizer=tf.contrib.layers.l2_regularizer(self._l2_reg),
-                                 activation=tf.tanh, name='logits')
+                                     kernel_initializer=tf.contrib.layers.xavier_initializer(),
+                                     kernel_regularizer=tf.contrib.layers.l2_regularizer(self._l2_reg),
+                                     name='logits')
 
             preds = tf.argmax(logits, axis=1)
             return preds, logits
