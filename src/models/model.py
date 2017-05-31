@@ -3,13 +3,14 @@ import tensorflow as tf
 class NativeLanguageIdentificationModel(object):
     """Abstracts a Tensorflow graph for the NLI task."""
 
-    def __init__(self, batch_size, max_seq_len, num_classes):
+    def __init__(self, batch_size, max_seq_len, num_classes, l2_reg):
         # TODO: Initialize model with common private _variables, such as model
         # hyperparameters. Subclasses will call super(<SubClass>, self).__init__
         # to inherit this initialization method.
         self._batch_size = batch_size
         self._max_seq_len = max_seq_len
         self._num_classes = num_classes
+        self._l2_reg = l2_reg
 
 
     def create_feed_dict(self, labels_batch, essay_inputs_batch):

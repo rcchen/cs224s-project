@@ -50,15 +50,6 @@ class RnnModel(NativeLanguageIdentificationModel):
                 use_bias=False,
                 name='h1')
 
-            # Second layer
-            # h2 = tf.layers.dense(h1,
-            #                      self._num_classes,
-            #                      kernel_initializer=tf.contrib.layers.xavier_initializer(),
-            #                      # kernel_regularizer=tf.contrib.layers.l2_regularizer(self._l2_reg),
-            #                      activation=tf.tanh,
-            #                      use_bias=False,
-            #                      name='h2')
-
             # Final softmax activation
             logits = tf.nn.softmax(h1, name='logits')
             preds = tf.argmax(logits, axis=1)
