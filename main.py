@@ -28,7 +28,7 @@ flags.DEFINE_integer('max_seq_len', 1e4, 'Max number of words in an example.')
 flags.DEFINE_integer('batch_size', 100, 'Number of examples to run in a batch.')
 flags.DEFINE_integer('num_epochs', 10, 'Number of epochs to train for.')
 flags.DEFINE_integer('embedding_size', 30, 'Size of trainable embeddings, applicable for char-gram embedding models.')
-flags.DEFINE_integer('hidden_size', 1e6, 'Number of cells in a neural network layer.')
+flags.DEFINE_integer('hidden_size', 300, 'Number of cells in a neural network layer.')
 
 # Training and testing
 flags.DEFINE_string('train_split', 'train', 'Split to train the model on.')

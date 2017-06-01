@@ -23,7 +23,10 @@ class MultilayerNeuralNetModel(NativeLanguageIdentificationModel):
                 dtype=tf.float64
             )
 
-            embedded_inputs = tf.nn.embedding_lookup(embeddings, self.essay_inputs_placeholder)
+            embedded_inputs = tf.reduce_sum(
+                tf.nn.embedding_lookup(embeddings, self.essay_inputs_placeholder),
+                axis=1
+            )
 
             # TODO: make initializer, regularizer configurable as flags.
             h1 = tf.layers.dense(embedded_inputs, self._hidden_size,
