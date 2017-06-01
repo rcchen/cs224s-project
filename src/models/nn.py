@@ -6,21 +6,27 @@ from src.utils.common import transform_inputs_to_count_vector
 
 class MultilayerNeuralNetModel(NativeLanguageIdentificationModel):
 
-    def __init__(self, vocab, hidden_size, *args, **kwargs):
+    def __init__(self, vocab, hidden_size, embedding_size, *args, **kwargs):
         super(MultilayerNeuralNetModel, self).__init__(*args, **kwargs)
         self._vocab = vocab
         self._hidden_size = hidden_size
+        self._embedding_size = embedding_size
 
 
     def add_prediction_op(self):
         """Runs the inputs through a multilayer NN."""
         with tf.variable_scope('prediction'):
-            encoded_inputs = tf.py_func(transform_inputs_to_count_vector,
-                [self._vocab.size(), self.essay_inputs_placeholder], tf.float64)
-            encoded_inputs.set_shape((None, self._vocab.size()))
+
+            embeddings = tf.get_variable('embeddings',
+                shape=(self._vocab.size(), self._embedding_size),
+                initializer=tf.contrib.layers.xavier_initializer(),  # TODO: consider different initializers
+                dtype=tf.float64
+            )
+
+            embedded_inputs = tf.nn.embedding_lookup(embeddings, self.essay_inputs_placeholder)
 
             # TODO: make initializer, regularizer configurable as flags.
-            h1 = tf.layers.dense(encoded_inputs, self._hidden_size,
+            h1 = tf.layers.dense(embedded_inputs, self._hidden_size,
                                  kernel_initializer=tf.contrib.layers.xavier_initializer(),
                                  kernel_regularizer=tf.contrib.layers.l2_regularizer(self._l2_reg),
                                  activation=tf.tanh, name='h1')
