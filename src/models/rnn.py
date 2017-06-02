@@ -3,11 +3,11 @@ import tensorflow as tf
 
 from model import NativeLanguageIdentificationModel
 
-class RnnModel(NativeLanguageIdentificationModel):
+class RNNModel(NativeLanguageIdentificationModel):
     """A model that trains an RNN classifier on character ngram inputs."""
 
     def __init__(self, vocab, embedding_size, hidden_size, *args, **kwargs):
-        super(RnnModel, self).__init__(*args, **kwargs)
+        super(RNNModel, self).__init__(*args, **kwargs)
         self._vocab = vocab
         self._embedding_size = embedding_size
         self._hidden_size = hidden_size
@@ -24,42 +24,30 @@ class RnnModel(NativeLanguageIdentificationModel):
             )
 
 	    cell = tf.contrib.rnn.BasicRNNCell(num_units=self._hidden_size)
-	    print cell.state_size
 
-            embedded_inputs = tf.nn.embedding_lookup(embeddings, self.essay_inputs_placeholder)
-	    print embedded_inputs
+      
+        embedded_inputs = tf.nn.embedding_lookup(embeddings, self.essay_inputs_placeholder)
 
-            projected_embedding_inputs = tf.layers.dense(embedded_inputs,
-                self._hidden_size,
-                kernel_initializer=tf.contrib.layers.xavier_initializer(),  # TODO: consider different initializers
-                name="prem_proj")
+        projected_embedding_inputs = tf.layers.dense(embedded_inputs,
+            self._hidden_size,
+            kernel_initializer=tf.contrib.layers.xavier_initializer(),  # TODO: consider different initializers
+            name="prem_proj")
 
-	    print projected_embedding_inputs
+        outputs, final_state = tf.nn.dynamic_rnn(cell=cell,
+                   inputs=projected_embedding_inputs,
+                                       sequence_length=self.essay_inputs_lengths,
+                                       dtype=tf.float64)
 
-            outputs, final_state = tf.nn.dynamic_rnn(cell=cell,
-					   inputs=projected_embedding_inputs,
-                                           sequence_length=self.essay_inputs_lengths,
-                                           dtype=tf.float64)
+        # First layer
+        # TODO: Add more layers, and add kernel_regularizer using l2_regularization.
+        h1 = tf.layers.dense(final_state,
+            self._num_classes,
+            kernel_initializer=tf.contrib.layers.xavier_initializer(),
+            activation=tf.tanh,
+            use_bias=False,
+            name='h1')
 
-	    print final_state
-
-            # Note to future self: We can use the final state as the initial state for
-            # serial LSTMs, using different data sources, for example.
-
-            # TODO: capture final state for variable-length sequences
-            # final_state = outputs[:,-1,:]
-
-            # First layer
-            # TODO: Add more layers, and add kernel_regularizer using l2_regularization.
-            h1 = tf.layers.dense(final_state,
-                self._num_classes,
-                kernel_initializer=tf.contrib.layers.xavier_initializer(),
-                activation=tf.tanh,
-                use_bias=False,
-                name='h1')
-
-            # Final softmax activation
-            logits = tf.nn.softmax(h1, name='logits')
-            preds = tf.argmax(logits, axis=1)
-
-            return preds, logits
+        # Final softmax activation
+        logits = tf.nn.softmax(h1, name='logits')
+        preds = tf.argmax(logits, axis=1)
+        return preds, logits

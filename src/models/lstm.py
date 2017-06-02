@@ -3,11 +3,11 @@ import tensorflow as tf
 
 from model import NativeLanguageIdentificationModel
 
-class RnnModel(NativeLanguageIdentificationModel):
-    """A model that trains an RNN classifier on character ngram inputs."""
+class LSTMModel(NativeLanguageIdentificationModel):
+    """A model that trains an RNN-LSTM classifier on character ngram inputs."""
 
     def __init__(self, vocab, embedding_size, hidden_size, *args, **kwargs):
-        super(RnnModel, self).__init__(*args, **kwargs)
+        super(LSTMModel, self).__init__(*args, **kwargs)
         self._vocab = vocab
         self._embedding_size = embedding_size
         self._hidden_size = hidden_size
@@ -41,10 +41,6 @@ class RnnModel(NativeLanguageIdentificationModel):
 
             # Note to future self: We can use the final state as the initial state for
             # serial LSTMs, using different data sources, for example.
-
-
-            # TODO: capture final state for variable-length sequences
-            # final_state = outputs[:,-1,:]
 
             # First layer
             # TODO: Add more layers, and add kernel_regularizer using l2_regularization.

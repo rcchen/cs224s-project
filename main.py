@@ -141,8 +141,10 @@ def get_model(vocab, dataset):
     }
     if FLAGS.model == 'baseline':
         return LinearSvmModel(vocab, **kwargs)
-    elif FLAGS.model == 'rnn':  # TODO: deprecate this.
-        return RnnModel(vocab, FLAGS.embedding_size, FLAGS.hidden_size, **kwargs)
+    elif FLAGS.model == 'rnn':
+        return RNNModel(vocab, FLAGS.embedding_size, FLAGS.hidden_size, **kwargs)
+    elif FLAGS.model == 'lstm':
+        return LSTMModel(vocab, FLAGS.embedding_size, FLAGS.hidden_size, **kwargs)
     elif FLAGS.model == 'nn':
         return MultilayerNeuralNetModel(vocab, FLAGS.hidden_size, FLAGS.embedding_size, **kwargs)
     else:
