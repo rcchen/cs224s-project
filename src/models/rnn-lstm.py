@@ -23,28 +23,25 @@ class RnnModel(NativeLanguageIdentificationModel):
                 dtype=tf.float64
             )
 
-	    cell = tf.contrib.rnn.BasicRNNCell(num_units=self._hidden_size)
-	    print cell.state_size
+            cell = tf.contrib.rnn.LSTMCell(
+                self._hidden_size,
+                initializer=tf.contrib.layers.xavier_initializer()  # TODO: consider different initializers
+            )
 
             embedded_inputs = tf.nn.embedding_lookup(embeddings, self.essay_inputs_placeholder)
-	    print embedded_inputs
 
             projected_embedding_inputs = tf.layers.dense(embedded_inputs,
                 self._hidden_size,
                 kernel_initializer=tf.contrib.layers.xavier_initializer(),  # TODO: consider different initializers
                 name="prem_proj")
 
-	    print projected_embedding_inputs
-
-            outputs, final_state = tf.nn.dynamic_rnn(cell=cell,
-					   inputs=projected_embedding_inputs,
+            outputs, (_, final_state) = tf.nn.dynamic_rnn(cell, embedded_inputs,
                                            sequence_length=self.essay_inputs_lengths,
                                            dtype=tf.float64)
 
-	    print final_state
-
             # Note to future self: We can use the final state as the initial state for
             # serial LSTMs, using different data sources, for example.
+
 
             # TODO: capture final state for variable-length sequences
             # final_state = outputs[:,-1,:]
