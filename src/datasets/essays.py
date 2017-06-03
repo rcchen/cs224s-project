@@ -63,14 +63,25 @@ def load_essays_data(path=get_default_path('../../var/data/essays'),
 
     return np.array(x_train), np.array(x_dev)
 
-def load_pos_data(path=get_default_path('../../var/data/essays')):
-    train_path = os.path.join(path, 'train/tokenized')
-    dev_path = os.path.join(path, 'dev/tokenized')
+def load_essays_pos(path=get_default_path('../../var/data/essays')):
+    cache_file = get_default_path('../../output/essays.pos.npz')
 
-    _, raw_train_data = get_data_for_path(train_path)
-    _, raw_dev_data = get_data_for_path(dev_path)
+    if os.path.isfile(cache_file):
+        data = np.load(cache_file)
+        x_train = data["x_train"]
+        x_dev = data["x_dev"]
+        return x_train, x_dev
 
-    x_train = get_pos_tags_for_data(raw_train_data)
-    x_dev = get_pos_tags_for_data(raw_dev_data)
+    else:
+        train_path = os.path.join(path, 'train/tokenized')
+        dev_path = os.path.join(path, 'dev/tokenized')
 
-    return np.array(x_train), np.array(x_dev)
+        _, raw_train_data = get_data_for_path(train_path)
+        _, raw_dev_data = get_data_for_path(dev_path)
+
+        x_train = get_pos_tags_for_data(raw_train_data)
+        x_dev = get_pos_tags_for_data(raw_dev_data)
+
+        np.savez(cache_file, x_train=x_train, x_dev=x_dev)
+
+        return np.array(x_train), np.array(x_dev)
