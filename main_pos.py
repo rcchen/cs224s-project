@@ -14,7 +14,8 @@ from src.datasets.speech import load_speech_data, load_speech_pos
 
 num_classes = 11
 num_pos_tags = 45
-num_tags = 50
+num_tags = 900
+hidden_dim = 25
 
 def run():
     X_train, X_test = load_essays_pos()
@@ -30,14 +31,11 @@ def run():
     print X_train.shape
     print X_test.shape
 
-    X_train = X_train.reshape(X_train.shape[0], -1, 1)
-    X_test = X_test.reshape(X_test.shape[0], -1, 1)
+    #X_train = X_train.reshape(X_train.shape[0], -1, 1)
+    #X_test = X_test.reshape(X_test.shape[0], -1, 1)
 
     # X_train = X_train.astype('float32')
     # X_test = X_test.astype('float32')
-
-    print X_train.shape
-    print X_test.shape
 
     # one-hot
     y_train = to_categorical(y_train)
@@ -50,8 +48,8 @@ def run():
 
     # create the model
     model = Sequential()
-    model.add(SimpleRNN(20,
-                        input_shape=X_train.shape[1:]))
+    model.add(Embedding(num_pos_tags, hidden_dim, input_length=num_tags))
+    model.add(LSTM(hidden_dim))  
     model.add(Dense(num_classes))
     model.add(Activation('softmax'))
     model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
