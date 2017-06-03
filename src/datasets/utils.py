@@ -1,6 +1,8 @@
 from collections import Counter
 import os
 
+import nltk
+
 def get_data_for_path(path):
     counter = Counter()
     raw_data = []
