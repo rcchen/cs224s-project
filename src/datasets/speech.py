@@ -2,7 +2,7 @@ import os
 
 import numpy as np
 
-from utils import get_data_for_path
+from utils import get_data_for_path, get_pos_tags_for_data
 
 def get_default_path(subdir):
     curdir = os.path.dirname(os.path.abspath(__file__))
@@ -11,7 +11,8 @@ def get_default_path(subdir):
 def load_speech_data(path=get_default_path('../../var/data/speech_transcriptions'),
                      num_words=None,
                      start_char=1,
-                     oov_char=2):
+                     oov_char=2,
+                     ngram_length=0):
     '''
     Loads the speech transcription dataset.
 
@@ -28,8 +29,12 @@ def load_speech_data(path=get_default_path('../../var/data/speech_transcriptions
     train_path = os.path.join(path, 'train/tokenized')
     dev_path = os.path.join(path, 'dev/tokenized')
 
-    counter, raw_train_data = get_data_for_path(train_path)
-    _, raw_dev_data = get_data_for_path(dev_path)
+    if not ngram_length == 0:
+        counter, raw_train_data = get_ngrams_for_path(train_path)
+        _, raw_dev_data = get_ngrams_for_path(dev_path)
+    else:
+        counter, raw_train_data = get_data_for_path(train_path)
+        _, raw_dev_data = get_data_for_path(dev_path)
 
     vocab_index = {}
     current_char = 3
@@ -54,5 +59,17 @@ def load_speech_data(path=get_default_path('../../var/data/speech_transcriptions
             if raw_token in vocab_index:
                 substituted_tokens.append(vocab_index[raw_token])
         x_dev.append(substituted_tokens)
+
+    return np.array(x_train), np.array(x_dev)
+
+def load_pos_data(path=get_default_path('../../var/data/speech')):
+    train_path = os.path.join(path, 'train/tokenized')
+    dev_path = os.path.join(path, 'dev/tokenized')
+
+    _, raw_train_data = get_data_for_path(train_path)
+    _, raw_dev_data = get_data_for_path(dev_path)
+
+    x_train = get_pos_tags_for_data(raw_train_data)
+    x_dev = get_pos_tags_for_data(raw_dev_data)
 
     return np.array(x_train), np.array(x_dev)

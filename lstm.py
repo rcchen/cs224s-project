@@ -16,7 +16,7 @@ top_words = 1000
 
 def run():
 
-    X_train, X_test = load_speech_data(num_words=top_words)
+    X_train, X_test = load_essays_data(num_words=top_words, ngram_length=1)
     y_train, y_test = load_labels()
 
     # truncate and pad input sequences
