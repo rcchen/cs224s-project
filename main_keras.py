@@ -1,15 +1,15 @@
-import os 
+import os
+
 import numpy as np
 import pandas as pd
 
 from keras.layers import Dense, Dropout, Activation
 from keras.models import Sequential
-from keras.preprocessing.text import Tokenizer, one_hot
+from keras.preprocessing.text import Tokenizer
 from keras.utils import to_categorical
 from keras.wrappers.scikit_learn import KerasClassifier
 
-from nltk import ngrams
-
+from nltk import ngrams 
 from sklearn.model_selection import cross_val_score, KFold
 from sklearn.preprocessing import LabelEncoder
 
@@ -22,13 +22,13 @@ def load_files_from_directory(path):
         if filename.endswith(".txt"):
             contents = open("%s/%s" % (path, filename)).read()
             data.append(contents)
+        else:
+            continue
     return np.array(data)
-
 
 def load_labels_from_file(path):
     labels = pd.read_csv(path)
     return np.concatenate(labels.as_matrix()[:, [3]]).ravel()
-
 
 print "Loading data..."
 x_train = load_files_from_directory("var/data/essays/train/tokenized")
@@ -37,14 +37,10 @@ y_train_raw = load_labels_from_file("var/data/labels/train/labels.train.csv")
 y_dev_raw = load_labels_from_file("var/data/labels/dev/labels.dev.csv")
 
 print "Vectorizing sequence data..."
-
 tokenizer = Tokenizer(num_words=NUM_WORDS, split=" ")
 tokenizer.fit_on_texts(x_train)
-
-x_train = tokenizer.texts_to_matrix(x_train, mode="tfidf")
-x_dev = tokenizer.texts_to_matrix(x_dev, mode="tfidf")
-
-print x_train[0]
+x_train = tokenizer.sequences_to_matrix(x_train, mode="freq")
+x_dev = tokenizer.sequences_to_matrix(x_dev, mode="freq")
 
 print "Convert class vector..."
 encoder = LabelEncoder()
@@ -56,7 +52,6 @@ y_dev_encoded = encoder.transform(y_dev_raw)
 y_train_dummy = to_categorical(y_train_encoded)
 y_dev_dummy = to_categorical(y_dev_encoded)
 
-# basically randomly guessing
 def baseline_model():
     model = Sequential()
     model.add(Dense(4, input_shape=(1000,), kernel_initializer='normal', activation='relu'))
@@ -64,10 +59,9 @@ def baseline_model():
     model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
     return model
 
-# doing ok
-def my_first_model():
+def my_model():
     model = Sequential()
-    model.add(Dense(units=100, input_dim=NUM_WORDS))
+    model.add(Dense(units=64, input_dim=NUM_WORDS))
     # model.add(Activation('relu'))
     # model.add(Dropout(0.5))
     model.add(Dense(units=11))
@@ -80,10 +74,18 @@ def my_first_model():
 
 print "Building model..."
 
-model = my_first_model()
+model = my_model()
+
+print x_train.shape
+print y_train_dummy.shape
+
+print np.count_nonzero(x_train)
+
+print x_train[0]
+print y_train_dummy[0]
 
 history = model.fit(x_train, y_train_dummy,
                     batch_size=BATCH_SIZE,
-                    epochs=200,
+                    epochs=10,
                     verbose=1,
                     validation_data=(x_dev, y_dev_dummy))
