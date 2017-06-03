@@ -8,6 +8,7 @@ from src.models import *
 from src.utils.dataset import Dataset
 from src.utils.progbar import Progbar
 from src.utils.vocab import Vocab
+from src.utils.glove import get_glove_vectors
 
 flags = tf.app.flags
 
@@ -16,18 +17,20 @@ flags.DEFINE_string('model', 'baseline', 'The name of the model to run.')
 flags.DEFINE_string('mode', 'train', 'Running mode: either "dev", "train", or "test"')
 flags.DEFINE_string('data_dir', 'var/data', 'The directory containing data files.')
 flags.DEFINE_string('output_dir', 'output', 'The directory for output to go.')
+flags.DEFINE_string('glove_file', 'glove.twitter.27B.25d.txt', 'The name of the glove file. Must match with embedding size.')
+flags.DEFINE_string('glove_saved_file', 'glove.twitter.27B.25d.npy', 'The name of the saved numpy glove vectors for the vocab.')
 
 # Data parameters
 flags.DEFINE_string('input_type', 'essays', 'Input data feature type: either "essays", \
                     "speech_transcriptions", "ivectors", or \
                     "speech_transcriptions+ivectors" ')
 flags.DEFINE_string('preprocessor', 'tokenized', 'Name of directory with processed essay files.')
-flags.DEFINE_string('ngram_lengths', '0,3', 'Comma-separated list of n-gram sizes to use as features.')
+flags.DEFINE_string('ngram_lengths', '0', 'Comma-separated list of n-gram sizes to use as features.')
 
 flags.DEFINE_integer('max_seq_len', 1e4, 'Max number of words in an example.')
 flags.DEFINE_integer('batch_size', 40, 'Number of examples to run in a batch.')
 flags.DEFINE_integer('num_epochs', 100, 'Number of epochs to train for.')
-flags.DEFINE_integer('embedding_size', 30, 'Size of trainable embeddings, applicable for char-gram embedding models.')
+flags.DEFINE_integer('embedding_size', 25, 'Size of trainable embeddings, applicable for char-gram embedding models.')
 flags.DEFINE_integer('hidden_size', 300, 'Number of cells in a neural network layer.')
 
 # Training and testing
@@ -49,6 +52,8 @@ FLAGS = flags.FLAGS
 # File paths
 vocab_dir = os.path.join(FLAGS.output_dir, 'vocabs')
 vocab_file = os.path.join(vocab_dir, 'ngrams-%s.txt' % FLAGS.ngram_lengths)
+glove_file = os.path.join(FLAGS.data_dir, 'glove', FLAGS.glove_file) 
+glove_saved_file = os.path.join(FLAGS.data_dir, 'glove', FLAGS.glove_saved_file) 
 pickle_dir = os.path.join(FLAGS.output_dir, 'pickles')
 pickle_file = os.path.join(pickle_dir, '%s_%s_ngrams-%s_data.pkl' % 
     (FLAGS.input_type, FLAGS.preprocessor, FLAGS.ngram_lengths))
@@ -156,6 +161,7 @@ def main(unused_argv):
     # Load the vocabulary file.
     ngram_lengths = [int(i) for i in FLAGS.ngram_lengths.split(',')]
     vocab = Vocab(vocab_file, os.path.join(FLAGS.data_dir, FLAGS.input_type), ngram_lengths)
+    embedding_matrix, missing_indices = get_glove_vectors(glove_file, glove_saved_file, FLAGS.embedding_size, vocab)
 
     # Load the data file.
     dataset = Dataset(FLAGS.data_dir, FLAGS.input_type, FLAGS.preprocessor,
