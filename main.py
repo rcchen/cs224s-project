@@ -36,7 +36,7 @@ flags.DEFINE_string('dev_split', 'dev', 'Split to evaluate the model on.')
 flags.DEFINE_boolean('save', True, 'Whether to save the model.')
 
 # Model hyperparamters
-flags.DEFINE_float('l2_reg', 1e-5, 'The L2 regularization coefficient')
+flags.DEFINE_float('l2_reg', 1e-4, 'The L2 regularization coefficient')
 
 # TODO: add dropout to our models.
 flags.DEFINE_float('dropout_rate', 0.15, 'How many units to eliminate during training, applicable to models using dropout.')
