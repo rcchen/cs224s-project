@@ -14,11 +14,13 @@ class MultilayerNeuralNetModel(NativeLanguageIdentificationModel):
         """Runs the inputs through a multilayer NN."""
         with tf.variable_scope('prediction'):
 
-            embeddings = tf.get_variable('embeddings',
-                shape=(self._vocab.size(), self._embedding_size),
-                initializer=tf.contrib.layers.xavier_initializer(),  # TODO: consider different initializers
-                dtype=tf.float64
-            )
+            #embeddings = tf.get_variable('embeddings',
+            #    shape=(self._vocab.size(), self._embedding_size),
+            #    initializer=tf.contrib.layers.xavier_initializer(),  # TODO: consider different initializers
+            #    dtype=tf.float64
+            #)
+
+	    embeddings = tf.get_variable('embedding', initializer=tf.constant(self._embedding_matrix), dtype=tf.float64,)
 
             embedded_inputs = tf.reduce_sum(
                 tf.nn.embedding_lookup(embeddings, self.essay_inputs_placeholder),

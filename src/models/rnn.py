@@ -22,10 +22,10 @@ class RNNModel(NativeLanguageIdentificationModel):
 
     	    cell = tf.contrib.rnn.BasicRNNCell(num_units=self._hidden_size)
 
-            embeddings = tf.get_variable('embeddings', tf.constant(self._embedding_matrix),
-                                         initializer=tf.constant(self._embedding_matrix),
-                                         dtype=tf.float64)
-            embedded_inputs = tf.nn.embedding_lookup(embeddings, self.essay_inputs_placeholder)
+            #embeddings = tf.get_variable('embeddings', 
+            #                             initializer=tf.constant(self._embedding_matrix),
+            #                             dtype=tf.float64)
+            embedded_inputs = tf.nn.embedding_lookup(tf.constant(self._embedding_matrix), self.essay_inputs_placeholder)
 
             # TODO: Investigate how to only train on unseen, keeping the GloVe vectors intact.
 
