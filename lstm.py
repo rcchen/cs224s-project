@@ -33,7 +33,6 @@ def run():
     model = Sequential()
     model.add(Embedding(top_words, embedding_vector_length, input_length=maxlen))
     model.add(LSTM(20))
-    # model.add(Dense(1, activation='sigmoid'))
     model.add(Dense(11, activation='sigmoid'))
     model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
     print(model.summary())

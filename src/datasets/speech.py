@@ -33,7 +33,7 @@ def load_speech_data(path=get_default_path('../../var/data/speech_transcriptions
 
     vocab_index = {}
     current_char = 3
-    for w in counter.most_common(num_words):
+    for w in counter.most_common(num_words - 3):
         vocab_index[w[0]] = current_char
         current_char += 1
 
