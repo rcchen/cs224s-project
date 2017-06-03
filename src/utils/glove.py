@@ -15,7 +15,7 @@ def get_glove_vectors(glove_file, glove_saved_file, dim, vocab):
             missing_indices = npzfile['missing_indices']
         return matrix, missing_indices
 
-    matrix = np.zeros([vocab.size(), dim])
+    matrix = np.random.uniform(size=[vocab.size(), dim])
     missing_indices = set([x for x in xrange(1, vocab.size())])
 
     with open(glove_file) as ifs:

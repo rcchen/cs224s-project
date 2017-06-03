@@ -20,7 +20,7 @@ class MultilayerNeuralNetModel(NativeLanguageIdentificationModel):
             #    dtype=tf.float64
             #)
 
-	    embeddings = tf.get_variable('embedding', initializer=tf.constant(self._embedding_matrix), dtype=tf.float64,)
+	    embeddings = tf.get_variable('embedding', initializer=tf.constant(self._embedding_matrix), dtype=tf.float64)
 
             embedded_inputs = tf.reduce_sum(
                 tf.nn.embedding_lookup(embeddings, self.essay_inputs_placeholder),
