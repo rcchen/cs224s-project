@@ -6,11 +6,8 @@ from model import NativeLanguageIdentificationModel
 class LSTMModel(NativeLanguageIdentificationModel):
     """A model that trains an RNN-LSTM classifier on character ngram inputs."""
 
-    def __init__(self, vocab, embedding_size, hidden_size, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super(LSTMModel, self).__init__(*args, **kwargs)
-        self._vocab = vocab
-        self._embedding_size = embedding_size
-        self._hidden_size = hidden_size
 
 
     def add_prediction_op(self):

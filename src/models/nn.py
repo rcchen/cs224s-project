@@ -6,11 +6,8 @@ from src.utils.common import transform_inputs_to_count_vector
 
 class MultilayerNeuralNetModel(NativeLanguageIdentificationModel):
 
-    def __init__(self, vocab, hidden_size, embedding_size, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super(MultilayerNeuralNetModel, self).__init__(*args, **kwargs)
-        self._vocab = vocab
-        self._hidden_size = hidden_size
-        self._embedding_size = embedding_size
 
 
     def add_prediction_op(self):

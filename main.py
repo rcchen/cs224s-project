@@ -138,20 +138,26 @@ def test(model, dataset):
         np.savetxt("%s/%s/%s.csv" % (predictions_dir, FLAGS.mode, timestamp), predictions, delimiter=",")       
 
 def get_model(vocab, dataset):
+    embedding_matrix, missing_indices = 
+        get_glove_vectors(glove_file, glove_saved_file, FLAGS.embedding_size, vocab)
+
     kwargs = {
         'batch_size': FLAGS.batch_size,
         'max_seq_len': vocab.size(), # size of dataset
         'num_classes': len(dataset.CLASS_LABELS),
         'l2_reg': FLAGS.l2_reg
+        'embedding_matrix': embedding_matrix,
+        'missing_indices': missing_indices
     }
+
     if FLAGS.model == 'baseline':
-        return LinearSvmModel(vocab, **kwargs)
+        return LinearSvmModel(**kwargs)
     elif FLAGS.model == 'rnn':
-        return RNNModel(vocab, FLAGS.embedding_size, FLAGS.hidden_size, **kwargs)
+        return RNNModel(**kwargs)
     elif FLAGS.model == 'lstm':
-        return LSTMModel(vocab, FLAGS.embedding_size, FLAGS.hidden_size, **kwargs)
+        return LSTMModel(**kwargs)
     elif FLAGS.model == 'nn':
-        return MultilayerNeuralNetModel(vocab, FLAGS.hidden_size, FLAGS.embedding_size, **kwargs)
+        return MultilayerNeuralNetModel(**kwargs)
     else:
         raise ValueError("Unrecognized model: %s." % FLAGS.model)
 
@@ -161,7 +167,6 @@ def main(unused_argv):
     # Load the vocabulary file.
     ngram_lengths = [int(i) for i in FLAGS.ngram_lengths.split(',')]
     vocab = Vocab(vocab_file, os.path.join(FLAGS.data_dir, FLAGS.input_type), ngram_lengths)
-    embedding_matrix, missing_indices = get_glove_vectors(glove_file, glove_saved_file, FLAGS.embedding_size, vocab)
 
     # Load the data file.
     dataset = Dataset(FLAGS.data_dir, FLAGS.input_type, FLAGS.preprocessor,
