@@ -11,6 +11,9 @@ import numpy as np
 from nltk.tokenize import word_tokenize
 from nltk import pos_tag_sents
 
+from src.datasets.essays import load_essays_pos
+from src.datasets.speech import load_speech_pos
+
 
 class Dataset(object):
 
@@ -45,6 +48,11 @@ class Dataset(object):
     def _create_dataframes(self, data_dir, input_type, preprocessor, max_seq_len, vocab):
         """Creates the pandas dataframes for the data."""
         df = {}
+
+        # Load pre-processed POS tag data
+        essay_pos_data = {}
+        essay_pos_data['train'], essay_pos_data['dev'] = load_essays_pos()
+
         for split in ['dev', 'train']:
 
             # Labels
@@ -73,6 +81,8 @@ class Dataset(object):
                                                    ivectors_data_path,
                                                    max_seq_len,
                                                    vocab)
+
+            split_features['essay_pos_features'] = essay_pos_data[split]
             df[split] = pd.DataFrame.from_dict(split_features)
 
         return df
@@ -134,11 +144,6 @@ class Dataset(object):
         with open(ivectors_data_path) as f:
             ivector_dict = json.loads(f.read())
             df['ivectors'] = [np.array(ivector_dict[speaker_id], dtype=np.float64) for speaker_id in speaker_ids]
-
-        # POSTagger
-        # pos_tags = [tag[1] for tag in pos_tag_sents(sentence_list)]
-        # df['essay_pos_features'] = np.array([self.pad_fn(tags) for tags in pos_tag_sents(sentence_list)])
-        df['essay_pos_features'] = np.zeros(len(speaker_ids))
 
         return df
 

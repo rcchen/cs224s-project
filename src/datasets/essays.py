@@ -79,7 +79,7 @@ def load_essays_pos(path=get_default_path('../../var/data/essays')):
         _, raw_train_data, train_speaker_ids = get_data_for_path(train_path)
         _, raw_dev_data, dev_speaker_ids = get_data_for_path(dev_path)
 
-	assert len(raw_train_data) == 11000
+        assert len(raw_train_data) == 11000
         assert len(raw_dev_data) == 1100
 
         sorted_train_data = [raw_dat for _, raw_dat in sorted(zip(train_speaker_ids, raw_train_data))]
