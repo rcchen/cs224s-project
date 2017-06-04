@@ -16,7 +16,7 @@ class LSTMModel(NativeLanguageIdentificationModel):
             # TODO: add regularizer to all trainable variables
             embeddings = tf.get_variable('embeddings',
                 shape=(self._vocab.size(), self._embedding_size),
-                initializer=tf.contrib.layers.xavier_initializer(),  # TODO: consider different initializers
+                initializer=tf.contrib.layers.xavier_initializer(),
                 dtype=tf.float64
             )
 
