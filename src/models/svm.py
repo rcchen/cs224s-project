@@ -6,9 +6,8 @@ from src.utils.common import transform_inputs_to_count_vector
 
 class LinearSvmModel(NativeLanguageIdentificationModel):
 
-    def __init__(self, vocab, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super(LinearSvmModel, self).__init__(*args, **kwargs)
-        self._vocab = vocab
 
 
     def add_prediction_op(self):

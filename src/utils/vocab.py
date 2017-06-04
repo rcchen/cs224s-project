@@ -92,6 +92,9 @@ class Vocab(object):
     def tokens_for_ids(self, ids):
         return [self.token_for_id(x) for x in ids]
 
+    def has_token(self, token):
+        return token in self.token_id
+
     @staticmethod
     def tokenize_ngrams(text, n):
         if n == 0:  # special case: tokenize by word
