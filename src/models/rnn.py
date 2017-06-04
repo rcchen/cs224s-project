@@ -4,7 +4,7 @@ import tensorflow as tf
 from model import NativeLanguageIdentificationModel
 
 class RNNModel(NativeLanguageIdentificationModel):
-    """A model that trains an RNN classifier on character ngram inputs."""
+    """A model that trains an RNN classifier on POS ngram inputs."""
 
     def __init__(self, *args, **kwargs):
         super(RNNModel, self).__init__(*args, **kwargs)
@@ -14,30 +14,32 @@ class RNNModel(NativeLanguageIdentificationModel):
         with tf.variable_scope('prediction'):
             # Initialize embeddings, with shape [vocab_size x hidden_size]
             # TODO: add regularizer to all trainable variables
-            # embeddings = tf.get_variable('embeddings',
-            #     shape=(self._vocab.size(), self._embedding_size),
-            #     initializer=tf.contrib.layers.xavier_initializer(),  # TODO: consider different initializers
-            #     dtype=tf.float64
-            # )
+            embeddings = tf.get_variable('embeddings',
+                shape=(self._vocab.size(), self._embedding_size),
+                initializer=tf.contrib.layers.xavier_initializer(),  # TODO: consider different initializers
+                dtype=tf.float64
+            )
 
     	    cell = tf.contrib.rnn.BasicRNNCell(num_units=self._hidden_size)
 
-            #embeddings = tf.get_variable('embeddings', 
-            #                             initializer=tf.constant(self._embedding_matrix),
-            #                             dtype=tf.float64)
-            embedded_inputs = tf.nn.embedding_lookup(tf.constant(self._embedding_matrix), self.essay_inputs_placeholder)
+            embedded_inputs = tf.nn.embedding_lookup(tf.constant(self._embedding_matrix),
+                self.essay_pos_inputs_placeholder)
+            embedding_shape = [tf.shape(self.essay_pos_inputs_placeholder)[0], \
+                               tf.shape(self.essay_pos_inputs_placeholder)[1], \
+                               self._embedding_size]
+            embedded_inputs = embedded_inputs.reshape(embedded_inputs, shape=embedding_shape)
 
             # TODO: Investigate how to only train on unseen, keeping the GloVe vectors intact.
 
             projected_embedding_inputs = tf.layers.dense(embedded_inputs,
-                self._hidden_size,
+                self._embedding_size,
                 kernel_initializer=tf.contrib.layers.xavier_initializer(),
                 name="prem_proj")
 
             outputs, final_state = tf.nn.dynamic_rnn(cell=cell,
-                       inputs=projected_embedding_inputs,
-                                           sequence_length=self.essay_inputs_lengths,
-                                           dtype=tf.float64)
+                inputs=embedded_inputs,
+                sequence_length=self.essay_inputs_lengths,
+                dtype=tf.float64)
 
             # First layer
             # TODO: Add more layers, and add kernel_regularizer using l2_regularization.

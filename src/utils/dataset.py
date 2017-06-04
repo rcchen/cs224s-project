@@ -8,6 +8,9 @@ import tensorflow as tf
 import pandas as pd
 import numpy as np
 
+from nltk.tokenize import word_tokenize
+from nltk import pos_tag_sents
+
 
 class Dataset(object):
 
@@ -82,7 +85,6 @@ class Dataset(object):
         else:
             return np.pad(seq, (0, self._max_seq_len - len(seq)), "constant")
 
-
     def extract_features(self,
                          labels_path, 
                          essays_data_path,
@@ -93,7 +95,6 @@ class Dataset(object):
         """Returns a dictionary of features, labels, and sequence lengths for the dataset."""
         df = {}
         df['essay_features'] = []
-        df['essay_pos_features'] = []
         df['essay_feature_lengths'] = []
         df['speech_transcription_features'] = []
         df['speech_transcription_feature_lengths'] = []
@@ -105,6 +106,9 @@ class Dataset(object):
         # Labels
         df['labels'] = np.array([self.CLASS_LABELS.index(l) for l in labels], dtype=np.int64)
 
+        # Bulk load POS tagger initialization
+        sentence_list = []
+
         for speaker_id in speaker_ids:
 
             filename = speaker_id + '.txt'
@@ -113,8 +117,7 @@ class Dataset(object):
             with open(os.path.join(essays_data_path, filename)) as f:
                 essay_text = f.read()
                 # Extract POS information
-                tokens_pos = vocab.pos_ids_for_sentence(essay_text)
-                df['essay_pos_features'].append(np.array(self.pad_fn(tokens_pos), dtype=np.int32))
+                sentence_list.append(word_tokenize(essay_text.decode('utf-8')))
 
                 # Index all tokens
                 tokens = vocab.ids_for_sentence(essay_text, self.ngram_lengths)
@@ -131,6 +134,10 @@ class Dataset(object):
         with open(ivectors_data_path) as f:
             ivector_dict = json.loads(f.read())
             df['ivectors'] = [np.array(ivector_dict[speaker_id], dtype=np.float64) for speaker_id in speaker_ids]
+
+        # POSTagger
+        pos_tags = [tag[1] for tag in pos_tag_sents(sentence_list)]
+        df['essay_pos_features'] = np.array([self.pad_fn(tags) for tags in pos_tag_sents(sentence_list)])
 
         return df
 
