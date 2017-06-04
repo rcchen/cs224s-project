@@ -15,7 +15,7 @@ class LSTMModel(NativeLanguageIdentificationModel):
             # Initialize embeddings, with shape [vocab_size x hidden_size]
             # TODO: add regularizer to all trainable variables
             embeddings = tf.get_variable('embeddings',
-                shape=(self._vocab.size(), self._embedding_size),
+                shape=(45, self._embedding_size),
                 initializer=tf.contrib.layers.xavier_initializer(),  # TODO: consider different initializers
                 dtype=tf.float64
             )
@@ -25,7 +25,11 @@ class LSTMModel(NativeLanguageIdentificationModel):
                 initializer=tf.contrib.layers.xavier_initializer()  # TODO: consider different initializers
             )
 
-            embedded_inputs = tf.nn.embedding_lookup(embeddings, self.essay_inputs_placeholder)
+            embedded_inputs = tf.nn.embedding_lookup(embeddings, self.essay_pos_inputs_placeholder)
+            embedding_shape = [tf.shape(self.essay_pos_inputs_placeholder)[0], \
+                               tf.shape(self.essay_pos_inputs_placeholder)[1], \
+                               self._embedding_size]
+            embedded_inputs = tf.reshape(embedded_inputs, shape=embedding_shape)
 
             projected_embedding_inputs = tf.layers.dense(embedded_inputs,
                 self._hidden_size,
