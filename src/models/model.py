@@ -56,7 +56,7 @@ class NativeLanguageIdentificationModel(object):
             shape=(None, self._max_seq_len), name='speech_transcription_inputs')
         self.speech_transcriptions_inputs_lengths = tf.placeholder(
             tf.int32, shape=(None), name='speech_transcription_input_lengths')
-        self.ivector_inputs_placeholder = tf.placeholder(tf.int64, \
+        self.ivector_inputs_placeholder = tf.placeholder(tf.float64, \
             shape=(None, 800), name='ivector_inputs')
 
 
