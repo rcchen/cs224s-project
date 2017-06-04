@@ -6,8 +6,11 @@ import nltk
 def get_data_for_path(path):
     counter = Counter()
     raw_data = []
+    speaker_ids = []
     for filename in os.listdir(path):
         if filename.endswith('.txt'):
+            speaker_id = int(re.search('(\d+)\.txt', filename).group(1))
+            speaker_ids.append(speaker_id)
             with open('%s/%s' % (path, filename)) as f:
                 file_tokens = []
                 for line in f:
@@ -16,7 +19,7 @@ def get_data_for_path(path):
                         counter[token] += 1
                         file_tokens.append(token)
                 raw_data.append(file_tokens)
-    return counter, raw_data
+    return counter, raw_data, speaker_ids
 
 def get_ngrams_for_path(path, ngram_size=1):
     counter = Counter()

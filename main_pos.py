@@ -18,7 +18,7 @@ num_tags = 900
 hidden_dim = 25
 
 def run():
-    X_train, X_test = load_essays_pos()
+    X_train, X_test, _ = load_essays_pos()
     y_train, y_test = load_labels()
 
     # bin the POS tags
