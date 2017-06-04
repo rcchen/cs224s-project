@@ -26,7 +26,7 @@ class RNNModel(NativeLanguageIdentificationModel):
             embedding_shape = [tf.shape(self.essay_pos_inputs_placeholder)[0], \
                                tf.shape(self.essay_pos_inputs_placeholder)[1], \
                                self._embedding_size]
-            embedded_inputs = embedded_inputs.reshape(embedded_inputs, shape=embedding_shape)
+            embedded_inputs = tf.reshape(embedded_inputs, shape=embedding_shape)
 
             # TODO: Investigate how to only train on unseen, keeping the GloVe vectors intact.
 
