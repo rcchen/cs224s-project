@@ -14,7 +14,8 @@ from src.datasets.speech import load_speech_data, load_speech_pos
 
 num_classes = 11
 num_pos_tags = 45
-num_tags = 50
+num_tags = 876
+hidden_dim = 25
 
 def run():
     X_train, X_test = load_essays_pos()
@@ -50,6 +51,7 @@ def run():
 
     # create the model
     model = Sequential()
+    model.add(Embedding(num_pos_tags, hidden_dim, input_length=num_tags))
     model.add(SimpleRNN(20,
                         input_shape=X_train.shape[1:]))
     model.add(Dense(num_classes))
