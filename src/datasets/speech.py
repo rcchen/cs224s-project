@@ -75,15 +75,14 @@ def load_speech_pos(path=get_default_path('../../var/data/speech')):
         train_path = os.path.join(path, 'train/tokenized')
         dev_path = os.path.join(path, 'dev/tokenized')
 
-        _, raw_train_data, speaker_ids = get_data_for_path(train_path)
-        _, raw_dev_data, speaker_ids = get_data_for_path(dev_path)
+        _, raw_train_data, train_speaker_ids = get_data_for_path(train_path)
+        _, raw_dev_data, dev_speaker_ids = get_data_for_path(dev_path)
 
-        sorted_train_data = [raw_dat for _, raw_dat in sorted(zip(speaker_ids, raw_train_data))]
-        sorted_dev_data = [raw_dat for _, raw_dat in sorted(zip(speaker_ids, raw_dev_data))]
+        sorted_train_data = [raw_dat for _, raw_dat in sorted(zip(train_speaker_ids, raw_train_data))]
+        sorted_dev_data = [raw_dat for _, raw_dat in sorted(zip(dev_speaker_ids, raw_dev_data))]
 
         x_train_pos = get_pos_tags_for_data(sorted_train_data)
         x_dev_pos = get_pos_tags_for_data(sorted_dev_data)
-        sorted_speaker_ids = sorted(speaker_ids)
 
         # go through all pos tags and figure out integer representations for each one
         tags = {}
@@ -109,6 +108,6 @@ def load_speech_pos(path=get_default_path('../../var/data/speech')):
                 x_dev_datum_remapped.append(tags[pos])
             x_dev.append(x_dev_datum_remapped)
 
-        np.savez(cache_file, x_train=x_train, x_dev=x_dev, speaker_ids=sorted_speaker_ids)
+        np.savez(cache_file, x_train=x_train, x_dev=x_dev, train_speaker_ids=sorted(train_speaker_ids), dev_speaker_ids=sorted(dev_speaker_ids))
 
-        return np.array(x_train), np.array(x_dev), np.array(sorted_speaker_ids)
+        return np.array(x_train), np.array(x_dev)
