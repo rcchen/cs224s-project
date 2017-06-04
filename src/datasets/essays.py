@@ -122,4 +122,4 @@ def load_essays_pos(path=get_default_path('../../var/data/essays'), max_seq_len=
 
         np.savez(cache_file, x_train=x_train, x_dev=x_dev, train_speaker_ids=sorted(train_speaker_ids), dev_speaker_ids=sorted(dev_speaker_ids))
 
-        return np.matrix(x_train), np.matrix(x_dev)
+        return x_train, x_dev
