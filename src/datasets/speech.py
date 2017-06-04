@@ -63,7 +63,7 @@ def load_speech_data(path=get_default_path('../../var/data/speech_transcriptions
     return np.array(x_train), np.array(x_dev)
 
 def load_speech_pos(path=get_default_path('../../var/data/speech')):
-    cache_file = get_default_path('../../output/speech.pos.npz')
+    cache_file = get_default_path('../../output/pos/speech.pos.npz')
 
     if os.path.isfile(cache_file):
         data = np.load(cache_file)

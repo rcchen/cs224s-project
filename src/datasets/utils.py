@@ -1,7 +1,8 @@
 from collections import Counter
-import os
-
 import nltk
+import os
+import re
+
 
 def get_data_for_path(path):
     counter = Counter()

@@ -64,7 +64,7 @@ def load_essays_data(path=get_default_path('../../var/data/essays'),
     return np.array(x_train), np.array(x_dev)
 
 def load_essays_pos(path=get_default_path('../../var/data/essays')):
-    cache_file = get_default_path('../../output/essays.pos.npz')
+    cache_file = get_default_path('../../output/pos/essays.pos.npz')
 
     if os.path.isfile(cache_file):
         data = np.load(cache_file)

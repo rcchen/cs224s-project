@@ -136,8 +136,9 @@ class Dataset(object):
             df['ivectors'] = [np.array(ivector_dict[speaker_id], dtype=np.float64) for speaker_id in speaker_ids]
 
         # POSTagger
-        pos_tags = [tag[1] for tag in pos_tag_sents(sentence_list)]
-        df['essay_pos_features'] = np.array([self.pad_fn(tags) for tags in pos_tag_sents(sentence_list)])
+        # pos_tags = [tag[1] for tag in pos_tag_sents(sentence_list)]
+        # df['essay_pos_features'] = np.array([self.pad_fn(tags) for tags in pos_tag_sents(sentence_list)])
+        df['essay_pos_features'] = np.zeros(len(speaker_ids))
 
         return df
 
