@@ -114,7 +114,7 @@ class Dataset(object):
                 row in csv.DictReader(labels_f)])
 
         # Labels
-        df['labels'] = np.array([self.CLASS_LABELS.index(l) for l in labels], dtype=np.int64)
+        df['labels'] = [self.CLASS_LABELS.index(l) for l in labels]
 
         # Bulk load POS tagger initialization
         sentence_list = []

@@ -108,7 +108,7 @@ def load_essays_pos(path=get_default_path('../../var/data/essays'), max_seq_len=
                     tags[pos] = counter
                     counter += 1
                 x_train_datum_remapped.append(tags[pos])
-            x_train.append(pad_fn(x_train_datum_remapped, max_seq_len))
+            x_train.append(np.array(pad_fn(x_train_datum_remapped, max_seq_len), dtype=np.int32))
 
         x_dev = []
         for x_dev_datum in x_dev_pos:
@@ -118,7 +118,7 @@ def load_essays_pos(path=get_default_path('../../var/data/essays'), max_seq_len=
                     tags[pos] = counter
                     counter += 1
                 x_dev_datum_remapped.append(tags[pos])
-            x_dev.append(pad_fn(x_dev_datum_remapped, max_seq_len))
+            x_dev.append(np.array(pad_fn(x_dev_datum_remapped, max_seq_len), dtype=np.int32))
 
         np.savez(cache_file, x_train=x_train, x_dev=x_dev, train_speaker_ids=sorted(train_speaker_ids), dev_speaker_ids=sorted(dev_speaker_ids))
 
