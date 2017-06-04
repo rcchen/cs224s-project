@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 # source: https://github.com/DeNeutoy/Decomposable_Attn/blob/master/Vocab.py
 
 import os, glob, json
@@ -96,7 +98,7 @@ class Vocab(object):
     @staticmethod
     def tokenize_ngrams(text, n):
         if n == 0:  # special case: tokenize by word
-            return word_tokenize(text)
+            return word_tokenize(text.decode('utf-8'))
         if len(text) < n:
             stripped_text = text.strip()
             if len(stripped_text) != 0:

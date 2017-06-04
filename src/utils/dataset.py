@@ -1,4 +1,5 @@
 import csv
+import json
 import math
 import os
 import pickle
@@ -42,19 +43,33 @@ class Dataset(object):
         df = {}
         for split in ['dev', 'train']:
 
+            # Labels
             labels_path = ("{data_dir}/labels/{split}/labels.{split}.csv".format(
                 data_dir=data_dir, split=split
             ))
-            data_path = ("{data_dir}/{input_type}/{split}/{preprocessor}/".format(
-                data_dir=data_dir, input_type=input_type, split=split,
-                preprocessor=preprocessor,
+
+            # Essays
+            essays_data_path = ("{data_dir}/essays/{split}/{preprocessor}/".format(
+                data_dir=data_dir, split=split, preprocessor=preprocessor
             ))
 
-            with open(labels_path) as labels_f:
-                data_files, labels = \
-                    zip(*[(os.path.join(data_path, row['test_taker_id'] + '.txt'),
-                            row['L1']) for row in csv.DictReader(labels_f)])
-                df[split] = pd.DataFrame(self.extract_features(data_files, labels, vocab))
+            # Speech transcriptions
+            speech_transcriptions_data_path = ("{data_dir}/speech_transcriptions/{split}/{preprocessor}".format(
+                data_dir=data_dir, split=split, preprocessor=preprocessor
+            ))
+
+            # i-Vectors
+            ivectors_data_path = ("{data_dir}/ivectors/{split}/ivectors.json".format(
+                data_dir=data_dir, split=split
+            ))
+
+            split_features = self.extract_features(labels_path, 
+                                                   essays_data_path,
+                                                   speech_transcriptions_data_path,
+                                                   ivectors_data_path,
+                                                   max_seq_len,
+                                                   vocab)
+            df[split] = pd.DataFrame.from_dict(split_features)
 
         return df
 
@@ -67,25 +82,59 @@ class Dataset(object):
         else:
             return np.pad(seq, (0, max_seq_len - len(seq)), "constant")
 
-    def extract_features(self, file_list, labels, vocab):
+
+    def extract_features(self,
+                         labels_path, 
+                         essays_data_path,
+                         speech_transcriptions_data_path,
+                         ivectors_data_path,
+                         max_seq_len,
+                         vocab):
         """Returns a dictionary of features, labels, and sequence lengths for the dataset."""
         df = {}
-        df['labels'] = np.array([self.CLASS_LABELS.index(l) for l in labels], dtype=np.int64)
-        df['features'] = []
-        df['lengths'] = []
-        for filename in file_list:
-            with open(filename) as f:
-                tokens = vocab.ids_for_sentence(f.read(), self.ngram_lengths)
-                df['features'].append(np.array(self.pad_fn(tokens, vocab.size()), dtype=np.int64))
-                df['lengths'].append(len(tokens))
+        df['essay_features'] = []
+        df['essay_feature_lengths'] = []
+        df['speech_transcription_features'] = []
+        df['speech_transcription_feature_lengths'] = []
 
-        # Data consistency check
-        assert len(df['labels']) == len(df['features']) == len(df['lengths'])
+        with open(labels_path) as labels_f:
+            speaker_ids, labels = zip(*[(row['test_taker_id'], row['L1']) for
+                row in csv.DictReader(labels_f)])
+
+        # Labels
+        df['labels'] = np.array([self.CLASS_LABELS.index(l) for l in labels], dtype=np.int64)
+
+        for speaker_id in speaker_ids:
+
+            filename = speaker_id + '.txt'
+
+            # Essays
+            with open(os.path.join(essays_data_path, filename)) as f:
+                tokens = vocab.ids_for_sentence(f.read(), self.ngram_lengths)
+                df['essay_features'].append(np.array(self.pad_fn(tokens, vocab.size()), dtype=np.int64))
+                df['essay_feature_lengths'].append(min(len(tokens), max_seq_len))
+
+            # Speech Transcriptions
+            with open(os.path.join(speech_transcriptions_data_path, filename)) as f:
+                tokens = vocab.ids_for_sentence(f.read(), self.ngram_lengths)
+                df['speech_transcription_features'].append(np.array(self.pad_fn(tokens, vocab.size()), dtype=np.int64))
+                df['speech_transcription_feature_lengths'].append(min(len(tokens), max_seq_len))
+
+        # i-Vectors
+        with open(ivectors_data_path) as f:
+            ivector_dict = json.loads(f.read())
+            df['ivectors'] = [np.array(ivector_dict[speaker_id], dtype=np.float64) for speaker_id in speaker_ids]
+
         return df
 
     def _make_batch(self, df):
         # The sequence lengths are required in order to use Tensorflow's dynamic rnn functions correctly
-        return np.stack(df['features']), np.stack(df['lengths']), np.stack(df['labels'])
+        return np.stack(df['essay_features']), \
+               np.stack(df['essay_feature_lengths']), \
+               np.stack(df['speech_transcription_features']), \
+               np.stack(df['speech_transcription_feature_lengths']), \
+               np.stack(df['ivectors']), \
+               np.stack(df['labels'])
 
     def _make_iterator(self, df, batch_size):
         total_examples = len(df)
