@@ -142,14 +142,14 @@ def get_model(vocab, dataset):
 
     kwargs = {
         'batch_size': FLAGS.batch_size,
-        'max_seq_len': vocab.size(), # size of dataset
+        'max_seq_len': FLAGS.max_seq_len,
         'num_classes': len(dataset.CLASS_LABELS),
         'l2_reg': FLAGS.l2_reg,
-	'vocab': vocab,
+        'vocab': vocab,
         'embedding_matrix': embedding_matrix,
         'missing_indices': missing_indices,
-	'embedding_size': FLAGS.embedding_size,
-	'hidden_size': FLAGS.hidden_size 
+        'embedding_size': FLAGS.embedding_size,
+        'hidden_size': FLAGS.hidden_size 
     }
 
     if FLAGS.model == 'baseline':

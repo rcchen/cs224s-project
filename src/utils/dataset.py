@@ -26,7 +26,7 @@ class Dataset(object):
                  ngram_lengths):
 
         self.ngram_lengths = ngram_lengths
-        self._max_seq_len = max_seq_len
+        self._max_seq_len = int(max_seq_len)
 
         if os.path.isfile(data_file):
             with open(data_file, 'r') as f:
@@ -74,8 +74,7 @@ class Dataset(object):
 
         return df
 
-    @staticmethod
-    def pad_fn(seq):
+    def pad_fn(self, seq):
         """Truncates a sequence to the max length, padding when necessary."""
         if len(seq) > self._max_seq_len:
             print "WARNING: some sequences will be truncated."
@@ -115,7 +114,7 @@ class Dataset(object):
                 essay_text = f.read()
                 # Extract POS information
                 tokens_pos = vocab.pos_ids_for_sentence(essay_text)
-                df['essay_pos_features'].append(np.array(self.pad_fn(tokens_pos)), dtype=np.int32)
+                df['essay_pos_features'].append(np.array(self.pad_fn(tokens_pos), dtype=np.int32))
 
                 # Index all tokens
                 tokens = vocab.ids_for_sentence(essay_text, self.ngram_lengths)
