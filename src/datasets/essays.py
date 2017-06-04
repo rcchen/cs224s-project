@@ -63,7 +63,15 @@ def load_essays_data(path=get_default_path('../../var/data/essays'),
 
     return np.array(x_train), np.array(x_dev)
 
-def load_essays_pos(path=get_default_path('../../var/data/essays')):
+def pad_fn(seq, max_seq_len):
+        """Truncates a sequence to the max length, padding when necessary."""
+        if len(seq) > max_seq_len:
+            print "WARNING: some sequences will be truncated."
+            return seq[:max_seq_len]
+        else:
+            return np.pad(seq, (0, max_seq_len - len(seq)), "constant")
+
+def load_essays_pos(path=get_default_path('../../var/data/essays'), max_seq_len=10000):
     cache_file = get_default_path('../../output/pos/essays.pos.npz')
 
     if os.path.isfile(cache_file):
@@ -100,7 +108,7 @@ def load_essays_pos(path=get_default_path('../../var/data/essays')):
                     tags[pos] = counter
                     counter += 1
                 x_train_datum_remapped.append(tags[pos])
-            x_train.append(x_train_datum_remapped)
+            x_train.append(pad_fn(x_train_datum_remapped, max_seq_len))
 
         x_dev = []
         for x_dev_datum in x_dev_pos:
@@ -110,8 +118,8 @@ def load_essays_pos(path=get_default_path('../../var/data/essays')):
                     tags[pos] = counter
                     counter += 1
                 x_dev_datum_remapped.append(tags[pos])
-            x_dev.append(x_dev_datum_remapped)
+            x_dev.append(pad_fn(x_dev_datum_remapped, max_seq_len))
 
         np.savez(cache_file, x_train=x_train, x_dev=x_dev, train_speaker_ids=sorted(train_speaker_ids), dev_speaker_ids=sorted(dev_speaker_ids))
 
-        return np.array(x_train), np.array(x_dev)
+        return np.matrix(x_train), np.matrix(x_dev)

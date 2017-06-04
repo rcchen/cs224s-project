@@ -51,7 +51,7 @@ class Dataset(object):
 
         # Load pre-processed POS tag data
         essay_pos_data = {}
-        essay_pos_data['train'], essay_pos_data['dev'] = load_essays_pos()
+        essay_pos_data['train'], essay_pos_data['dev'] = load_essays_pos(max_seq_len)
 
         for split in ['dev', 'train']:
 
