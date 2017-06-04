@@ -23,23 +23,51 @@ class MultilayerNeuralNetModel(NativeLanguageIdentificationModel):
                 dtype=tf.float64
             )
 
-            embedded_inputs = tf.reduce_sum(
+            # ESSAY INPUTS
+
+            embedded_essay_inputs = tf.reduce_sum(
                 tf.nn.embedding_lookup(embeddings, self.essay_inputs_placeholder),
                 axis=1
             )
 
-            # TODO: make initializer, regularizer configurable as flags.
-            h1 = tf.layers.dense(embedded_inputs, self._hidden_size,
+            es_h1 = tf.layers.dense(embedded_essay_inputs, self._hidden_size,
                                  kernel_initializer=tf.contrib.layers.xavier_initializer(),
                                  kernel_regularizer=tf.contrib.layers.l2_regularizer(self._l2_reg),
-                                 activation=tf.tanh, name='h1')
+                                 activation=tf.tanh, name='es_h1')
             
-            h2 = tf.layers.dense(h1, self._hidden_size,
+            es_h2 = tf.layers.dense(es_h1, self._hidden_size,
                                  kernel_initializer=tf.contrib.layers.xavier_initializer(),
                                  kernel_regularizer=tf.contrib.layers.l2_regularizer(self._l2_reg),
-                                 activation=tf.tanh, name='h2')
+                                 activation=tf.tanh, name='es_h2')
 
-            logits = tf.layers.dense(h2, self._num_classes,
+            # SPEECH TRANSCRIPTION INPUTS
+            embedded_speech_inputs = tf.reduce_sum(
+                tf.nn.embedding_lookup(embeddings, self.speech_transcriptions_inputs_placeholder),
+                axis=1
+            )
+
+            sp_h1 = tf.layers.dense(embedded_essay_inputs, self._hidden_size,
+                                 kernel_initializer=tf.contrib.layers.xavier_initializer(),
+                                 kernel_regularizer=tf.contrib.layers.l2_regularizer(self._l2_reg),
+                                 activation=tf.tanh, name='sp_h1')
+
+            sp_h2 = tf.layers.dense(embedded_essay_inputs, self._hidden_size,
+                                 kernel_initializer=tf.contrib.layers.xavier_initializer(),
+                                 kernel_regularizer=tf.contrib.layers.l2_regularizer(self._l2_reg),
+                                 activation=tf.tanh, name='sp_h2')
+
+            # IVECTOR INPUTS: originally 800d
+            ivector = self.ivector_inputs_placeholder
+
+            iv_h1 = tf.layers.dense(embedded_essay_inputs, self._hidden_size,
+                                 kernel_initializer=tf.contrib.layers.xavier_initializer(),
+                                 kernel_regularizer=tf.contrib.layers.l2_regularizer(self._l2_reg),
+                                 activation=tf.tanh, name='iv_h1')
+
+            # COMBINE ALL INPUTS
+            total_features = tf.concat([es_h2, sp_h2, iv_h1], axis=0)
+
+            logits = tf.layers.dense(total_features, self._num_classes,
                                      kernel_initializer=tf.contrib.layers.xavier_initializer(),
                                      kernel_regularizer=tf.contrib.layers.l2_regularizer(self._l2_reg),
                                      name='logits')
