@@ -6,22 +6,21 @@ from src.utils.common import transform_inputs_to_count_vector
 
 class MultilayerNeuralNetModel(NativeLanguageIdentificationModel):
 
-    def __init__(self, vocab, hidden_size, embedding_size, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super(MultilayerNeuralNetModel, self).__init__(*args, **kwargs)
-        self._vocab = vocab
-        self._hidden_size = hidden_size
-        self._embedding_size = embedding_size
 
 
     def add_prediction_op(self):
         """Runs the inputs through a multilayer NN."""
         with tf.variable_scope('prediction'):
 
-            embeddings = tf.get_variable('embeddings',
-                shape=(self._vocab.size(), self._embedding_size),
-                initializer=tf.contrib.layers.xavier_initializer(),  # TODO: consider different initializers
-                dtype=tf.float64
-            )
+            #embeddings = tf.get_variable('embeddings',
+            #    shape=(self._vocab.size(), self._embedding_size),
+            #    initializer=tf.contrib.layers.xavier_initializer(),  # TODO: consider different initializers
+            #    dtype=tf.float64
+            #)
+
+	        embeddings = tf.get_variable('embedding', initializer=tf.constant(self._embedding_matrix), dtype=tf.float64)
 
             # ESSAY INPUTS
 

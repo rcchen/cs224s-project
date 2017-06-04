@@ -62,14 +62,47 @@ def load_speech_data(path=get_default_path('../../var/data/speech_transcriptions
 
     return np.array(x_train), np.array(x_dev)
 
-def load_pos_data(path=get_default_path('../../var/data/speech')):
-    train_path = os.path.join(path, 'train/tokenized')
-    dev_path = os.path.join(path, 'dev/tokenized')
+def load_speech_pos(path=get_default_path('../../var/data/speech')):
+    cache_file = get_default_path('../../output/speech.pos.npz')
 
-    _, raw_train_data = get_data_for_path(train_path)
-    _, raw_dev_data = get_data_for_path(dev_path)
+    if os.path.isfile(cache_file):
+        data = np.load(cache_file)
+        x_train = data["x_train"]
+        x_dev = data["x_dev"]
+        return x_train, x_dev
 
-    x_train = get_pos_tags_for_data(raw_train_data)
-    x_dev = get_pos_tags_for_data(raw_dev_data)
+    else:
+        train_path = os.path.join(path, 'train/tokenized')
+        dev_path = os.path.join(path, 'dev/tokenized')
 
-    return np.array(x_train), np.array(x_dev)
+        _, raw_train_data = get_data_for_path(train_path)
+        _, raw_dev_data = get_data_for_path(dev_path)
+
+        x_train_pos = get_pos_tags_for_data(raw_train_data)
+        x_dev_pos = get_pos_tags_for_data(raw_dev_data)
+
+        # go through all pos tags and figure out integer representations for each one
+        tags = {}
+        counter = 0
+
+        x_train = []
+        for x_train_datum in x_train_pos:
+            x_train_datum_remapped = []
+            for pos in x_train_datum:
+                if not pos in tags:
+                    tags[pos] = counter
+                    counter += 1
+                x_train_datum_remapped.append(tags[pos])
+            x_train.append(x_train_datum_remapped)
+
+        x_dev = []
+        for x_dev_datum in x_dev_pos:
+            x_dev_datum_remapped = []
+            for pos in x_dev_datum:
+                if not pos in tags:
+                    tags[pos] = counter
+                    counter += 1
+                x_dev_datum_remapped.append(tags[pos])
+            x_dev.append(x_dev_datum_remapped)
+
+        return np.array(x_train), np.array(x_dev)
