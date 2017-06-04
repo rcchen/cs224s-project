@@ -18,7 +18,7 @@ class NativeLanguageIdentificationModel(object):
 
 
     def create_feed_dict(self, labels_batch, essay_inputs_batch, essay_inputs_len_batch,
-        speech_transcription_inputs_batch, speech_transcriptions_inputs_len_batch,
+        essay_inputs_pos_batch, speech_transcription_inputs_batch, speech_transcriptions_inputs_len_batch,
         ivector_inputs_batch):
         """Creates the feed_dict for one step of training.
         A feed_dict takes the form of:
@@ -32,6 +32,7 @@ class NativeLanguageIdentificationModel(object):
         feed_dict[self.labels_placeholder] = labels_batch
         feed_dict[self.essay_inputs_placeholder] = essay_inputs_batch
         feed_dict[self.essay_inputs_lengths] = essay_inputs_len_batch
+        feed_dict[self.essay_pos_inputs_placeholder] = essay_inputs_pos_batch
         feed_dict[self.speech_transcriptions_inputs_placeholder] = speech_transcription_inputs_batch
         feed_dict[self.speech_transcriptions_inputs_lengths] = speech_transcriptions_inputs_len_batch
         feed_dict[self.ivector_inputs_placeholder] = ivector_inputs_batch
@@ -52,11 +53,13 @@ class NativeLanguageIdentificationModel(object):
         self.essay_inputs_lengths = tf.placeholder(tf.int32, shape=(None), name='essay_input_lengths')
         self.essay_inputs_placeholder = tf.placeholder(tf.int64, \
             shape=(None, self._max_seq_len), name='essay_inputs')
+        self.essay_pos_inputs_placeholder = tf.placeholder(tf.int32, \
+            shape=(None, self._max_seq_len), name='essay_pos_inputs')
         self.speech_transcriptions_inputs_placeholder = tf.placeholder(tf.int64, \
             shape=(None, self._max_seq_len), name='speech_transcription_inputs')
         self.speech_transcriptions_inputs_lengths = tf.placeholder(
             tf.int32, shape=(None), name='speech_transcription_input_lengths')
-        self.ivector_inputs_placeholder = tf.placeholder(tf.int64, \
+        self.ivector_inputs_placeholder = tf.placeholder(tf.float64, \
             shape=(None, 800), name='ivector_inputs')
 
 
@@ -104,10 +107,11 @@ class NativeLanguageIdentificationModel(object):
         return tf.train.AdamOptimizer().minimize(loss)
 
 
-    def train_on_batch(self, sess, essay_inputs_batch, essay_inputs_len_batch,
+    def train_on_batch(self, sess, essay_inputs_batch, essay_inputs_len_batch, essay_inputs_pos_batch,
                        speech_transcription_inputs_batch, speech_transcriptions_inputs_len_batch,
                        ivector_inputs_batch, labels_batch):
         feed = self.create_feed_dict(labels_batch, essay_inputs_batch, essay_inputs_len_batch,
+                                     essay_inputs_pos_batch,
                                      speech_transcription_inputs_batch,
                                      speech_transcriptions_inputs_len_batch,
                                      ivector_inputs_batch)
@@ -115,10 +119,11 @@ class NativeLanguageIdentificationModel(object):
         return loss, summary
 
 
-    def evaluate_on_batch(self, sess, essay_inputs_batch, essay_inputs_len_batch,
+    def evaluate_on_batch(self, sess, essay_inputs_batch, essay_inputs_len_batch, essay_inputs_pos_batch,
                           speech_transcription_inputs_batch, speech_transcriptions_inputs_len_batch,
                           ivector_inputs_batch, labels_batch):
         feed = self.create_feed_dict(labels_batch, essay_inputs_batch, essay_inputs_len_batch,
+                                     essay_inputs_pos_batch,
                                      speech_transcription_inputs_batch,
                                      speech_transcriptions_inputs_len_batch,
                                      ivector_inputs_batch)

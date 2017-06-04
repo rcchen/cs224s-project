@@ -56,7 +56,7 @@ class MultilayerNeuralNetModel(NativeLanguageIdentificationModel):
                                  activation=tf.tanh, name='sp_h2')
 
             # IVECTOR INPUTS: originally 800d
-            ivector = self.ivector_inputs_placeholder
+            ivector = self.ivector_inputs_placeholde
 
             iv_h1 = tf.layers.dense(embedded_essay_inputs, self._hidden_size, use_bias=False,
                                  kernel_initializer=tf.contrib.layers.xavier_initializer(),

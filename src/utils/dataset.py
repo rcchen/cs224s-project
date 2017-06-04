@@ -26,6 +26,7 @@ class Dataset(object):
                  ngram_lengths):
 
         self.ngram_lengths = ngram_lengths
+        self._max_seq_len = max_seq_len
 
         if os.path.isfile(data_file):
             with open(data_file, 'r') as f:
@@ -74,13 +75,13 @@ class Dataset(object):
         return df
 
     @staticmethod
-    def pad_fn(seq, max_seq_len):
+    def pad_fn(seq):
         """Truncates a sequence to the max length, padding when necessary."""
-        if len(seq) > max_seq_len:
+        if len(seq) > self._max_seq_len:
             print "WARNING: some sequences will be truncated."
-            return seq[:max_seq_len]
+            return seq[:self._max_seq_len]
         else:
-            return np.pad(seq, (0, max_seq_len - len(seq)), "constant")
+            return np.pad(seq, (0, self._max_seq_len - len(seq)), "constant")
 
 
     def extract_features(self,
@@ -93,6 +94,7 @@ class Dataset(object):
         """Returns a dictionary of features, labels, and sequence lengths for the dataset."""
         df = {}
         df['essay_features'] = []
+        df['essay_pos_features'] = []
         df['essay_feature_lengths'] = []
         df['speech_transcription_features'] = []
         df['speech_transcription_feature_lengths'] = []
@@ -110,14 +112,20 @@ class Dataset(object):
 
             # Essays
             with open(os.path.join(essays_data_path, filename)) as f:
-                tokens = vocab.ids_for_sentence(f.read(), self.ngram_lengths)
-                df['essay_features'].append(np.array(self.pad_fn(tokens, vocab.size()), dtype=np.int64))
+                essay_text = f.read()
+                # Extract POS information
+                tokens_pos = vocab.pos_ids_for_sentence(essay_text)
+                df['essay_pos_features'].append(np.array(self.pad_fn(tokens_pos)), dtype=np.int32)
+
+                # Index all tokens
+                tokens = vocab.ids_for_sentence(essay_text, self.ngram_lengths)
+                df['essay_features'].append(np.array(self.pad_fn(tokens), dtype=np.int64))
                 df['essay_feature_lengths'].append(min(len(tokens), max_seq_len))
 
             # Speech Transcriptions
             with open(os.path.join(speech_transcriptions_data_path, filename)) as f:
                 tokens = vocab.ids_for_sentence(f.read(), self.ngram_lengths)
-                df['speech_transcription_features'].append(np.array(self.pad_fn(tokens, vocab.size()), dtype=np.int64))
+                df['speech_transcription_features'].append(np.array(self.pad_fn(tokens), dtype=np.int64))
                 df['speech_transcription_feature_lengths'].append(min(len(tokens), max_seq_len))
 
         # i-Vectors
@@ -131,6 +139,7 @@ class Dataset(object):
         # The sequence lengths are required in order to use Tensorflow's dynamic rnn functions correctly
         return np.stack(df['essay_features']), \
                np.stack(df['essay_feature_lengths']), \
+               np.stack(df['essay_pos_features']), \
                np.stack(df['speech_transcription_features']), \
                np.stack(df['speech_transcription_feature_lengths']), \
                np.stack(df['ivectors']), \

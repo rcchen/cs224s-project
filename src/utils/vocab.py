@@ -4,7 +4,12 @@
 
 import os, glob, json
 from collections import Counter
-from nltk.tokenize import word_tokenize, sent_tokenize
+from nltk.tokenize import word_tokenize, sent_tokenize, pos_tag
+
+# Authoritatively indexed list of POS from Penn Treebank
+POS_TAGS = ['CC', 'CD' 'DT', 'EX', 'FW', 'IN', 'JJ', 'JJR', 'JJS', 'LS', 'MD', 'NN', 'NNS',
+'NNP', 'NNPS', 'PDT', 'POS', 'PRP', 'PRP$', 'RB', 'RBR', 'RBS', 'RP', 'TO', 'UH', 'VB', 'VBD',
+'VBG', 'VBN', 'VBP', 'VBZ', 'WDT', 'WP', 'WP$', 'WRB']
 
 class Vocab(object):
 
@@ -110,3 +115,11 @@ class Vocab(object):
         for sentence in sentences:
             tokens += [sentence[i:i+n] for i in range(len(sentence) - n)]
         return tokens
+
+    @staticmethod
+    def pos_ids_for_sentence(text):
+        pos_tags = nltk.pos_tag(word_tokenize(text.decode('utf-8')))
+        def label_index(t):
+            # reserve last index for unindexed POS labels
+            return len(POS_TAGS) if t not in POS_TAGS else POS_TAGS.index(t)
+        return [label_index(t) for t in pos_id_for_tags(pos_tags)]
