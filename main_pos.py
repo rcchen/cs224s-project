@@ -18,7 +18,7 @@ num_tags = 900
 hidden_dim = 25
 
 def run():
-    X_train, X_test, _ = load_essays_pos()
+    X_train, X_test = load_essays_pos()
     y_train, y_test = load_labels()
 
     # bin the POS tags
@@ -27,9 +27,6 @@ def run():
 
     X_train = np.array([np.pad(row, num_tags-len(row), 'constant')[num_tags-len(row):] if len(row) < num_tags else row[:num_tags] for row in X_train])
     X_test = np.array([np.pad(row, num_tags-len(row), 'constant')[num_tags-len(row):] if len(row) < num_tags else row[:num_tags] for row in X_test])
-
-    print X_train.shape
-    print X_test.shape
 
     #X_train = X_train.reshape(X_train.shape[0], -1, 1)
     #X_test = X_test.reshape(X_test.shape[0], -1, 1)
