@@ -28,13 +28,6 @@ class RNNModel(NativeLanguageIdentificationModel):
                                self._embedding_size]
             embedded_inputs = tf.reshape(embedded_inputs, shape=embedding_shape)
 
-            # TODO: Investigate how to only train on unseen, keeping the GloVe vectors intact.
-
-            projected_embedding_inputs = tf.layers.dense(embedded_inputs,
-                self._embedding_size,
-                kernel_initializer=tf.contrib.layers.xavier_initializer(),
-                name="prem_proj")
-
             outputs, final_state = tf.nn.dynamic_rnn(cell=cell,
                 inputs=embedded_inputs,
                 sequence_length=self.essay_inputs_lengths,
