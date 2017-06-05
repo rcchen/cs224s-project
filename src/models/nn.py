@@ -16,14 +16,19 @@ class MultilayerNeuralNetModel(NativeLanguageIdentificationModel):
 
             embeddings = tf.get_variable('embeddings',
                 shape=(self._vocab.size(), self._embedding_size),
-                initializer=tf.contrib.layers.xavier_initializer(),  # TODO: consider different initializers
+                initializer=tf.contrib.layers.xavier_initializer(),
                 dtype=tf.float64
             )
 
+            pos_embeddings = tf.get_variable('pos_embeddings',
+                shape=(45, self._embedding_size),  # TODO: Extract the exact number of POSs seen
+                initializer=tf.contrib.layers.xavier_initializer(),
+                dtype=tf.float64
+            )
 
             # ESSAY INPUTS
 
-            embedded_essay_inputs = tf.nn.embedding_lookup(embeddings, self.essay_inputs_placeholder),
+            embedded_essay_inputs = tf.nn.embedding_lookup(embeddings, self.essay_inputs_placeholder)
             embedding_shape = [tf.shape(self.essay_inputs_placeholder)[0], tf.shape(self.essay_inputs_placeholder)[1], self._embedding_size]
             embedded_essay_inputs = tf.reshape(embedded_essay_inputs, shape=embedding_shape)
             embedded_essay_inputs = tf.reduce_sum(embedded_essay_inputs, axis=1)
@@ -37,6 +42,12 @@ class MultilayerNeuralNetModel(NativeLanguageIdentificationModel):
                                  kernel_initializer=tf.contrib.layers.xavier_initializer(),
                                  kernel_regularizer=tf.contrib.layers.l2_regularizer(self._l2_reg),
                                  activation=tf.tanh, name='es_h2')
+
+            # ESSAY POS INPUTS
+
+            embedded_essay_pos_inputs = tf.nn.embedding_lookup(pos_embeddings, self.essay_pos_inputs_placeholder)
+            embedded_essay_pos_inputs = tf.reshape(embedded_essay_pos_inputs, shape=embedding_shape)  # reuse shape
+            embedded_essay_pos_inputs = tf.reduce_sum(embedded_essay_inputs, axis=1)
 
             # SPEECH TRANSCRIPTION INPUTS
             embedded_speech_inputs = tf.reduce_sum(
@@ -61,9 +72,9 @@ class MultilayerNeuralNetModel(NativeLanguageIdentificationModel):
                                     activation=tf.tanh, name='iv_h1')
 
             # COMBINE ALL INPUTS
-            #total_features = tf.concat([es_h2, sp_h2, iv_h1], axis=1)
+            total_features = tf.concat([es_h2, sp_h2, iv_h1, embedded_essay_pos_inputs], axis=1)
 
-            logits = tf.layers.dense(es_h2, self._num_classes, use_bias=False,
+            logits = tf.layers.dense(total_features, self._num_classes, use_bias=False,
                                      kernel_initializer=tf.contrib.layers.xavier_initializer(),
                                      kernel_regularizer=tf.contrib.layers.l2_regularizer(self._l2_reg),
                                      name='logits')
