@@ -49,6 +49,10 @@ class MultilayerNeuralNetModel(NativeLanguageIdentificationModel):
             embedded_essay_pos_inputs = tf.reshape(embedded_essay_pos_inputs, shape=embedding_shape)  # reuse shape
             embedded_essay_pos_inputs = tf.reduce_sum(embedded_essay_inputs, axis=1)
 
+            # BUG: We would expect this to be size[ None, max_seq_len ], but apparently we are only
+            # getting a matrix of rank 1.
+            print embedded_essay_pos_inputs
+
             pos_h1 = tf.layers.dense(embedded_essay_pos_inputs, self._hidden_size, use_bias=False,
                                  kernel_initializer=tf.contrib.layers.xavier_initializer(),
                                  kernel_regularizer=tf.contrib.layers.l2_regularizer(self._l2_reg),
