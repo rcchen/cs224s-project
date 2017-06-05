@@ -21,7 +21,7 @@ class MultilayerNeuralNetModel(NativeLanguageIdentificationModel):
             )
 
             pos_embeddings = tf.get_variable('pos_embeddings',
-                shape=(self._pos_vocab.size(), self._embedding_size),  # TODO: Extract the exact number of POSs seen
+                shape=(self._pos_vocab.size(), self._embedding_size),
                 initializer=tf.contrib.layers.xavier_initializer(),
                 dtype=tf.float64
             )
@@ -45,12 +45,10 @@ class MultilayerNeuralNetModel(NativeLanguageIdentificationModel):
 
             # ESSAY POS INPUTS
 
-            print 'POS_EMBEDDINGS', pos_embeddings
-            print 'POS_INPUTS', self.essay_pos_inputs_placeholder 
             embedded_essay_pos_inputs = tf.nn.embedding_lookup(pos_embeddings, self.essay_pos_inputs_placeholder)
             embedding_shape = [tf.shape(self.essay_pos_inputs_placeholder)[0], tf.shape(self.essay_pos_inputs_placeholder)[1], self._embedding_size]
             embedded_essay_pos_inputs = tf.reshape(embedded_essay_pos_inputs, shape=embedding_shape)  # reuse shape
-            embedded_essay_pos_inputs = tf.reduce_sum(embedded_essay_inputs, axis=1)
+            embedded_essay_pos_inputs = tf.reduce_sum(embedded_essay_pos_inputs, axis=1)
 
             pos_h1 = tf.layers.dense(embedded_essay_pos_inputs, self._hidden_size, use_bias=False,
                                  kernel_initializer=tf.contrib.layers.xavier_initializer(),
@@ -88,7 +86,7 @@ class MultilayerNeuralNetModel(NativeLanguageIdentificationModel):
             # total_features = tf.concat([es_h2, sp_h2, iv_h1, pos_h2], axis=1)
 
             # Isolated testing, for now.
-            total_features = sp_h2
+            total_features = pos_h1
 
             logits = tf.layers.dense(total_features, self._num_classes, use_bias=False,
                                      kernel_initializer=tf.contrib.layers.xavier_initializer(),
