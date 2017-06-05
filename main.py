@@ -24,8 +24,10 @@ flags.DEFINE_string('glove_saved_file', 'glove.twitter.27B.25d.npy', 'The name o
 flags.DEFINE_string('input_type', 'essays', 'Input data feature type: either "essays", \
                     "speech_transcriptions", "ivectors", or \
                     "speech_transcriptions+ivectors" ')
+flags.DEFINE_string('pos_data_dir', 'pos', 'Name of directory in data folder containing part-of-speech data')
 flags.DEFINE_string('preprocessor', 'tokenized', 'Name of directory with processed essay files.')
 flags.DEFINE_string('ngram_lengths', '0,3,4', 'Comma-separated list of n-gram sizes to use as features.')
+flags.DEFINE_string('pos_ngram_lengths', '3', 'Comma-separated list of POS n-gram sizes to use as features.')
 
 flags.DEFINE_integer('max_seq_len', 1e4, 'Max number of words in an example.')
 flags.DEFINE_integer('batch_size', 40, 'Number of examples to run in a batch.')
@@ -52,6 +54,7 @@ FLAGS = flags.FLAGS
 # File paths
 vocab_dir = os.path.join(FLAGS.output_dir, 'vocabs')
 vocab_file = os.path.join(vocab_dir, 'ngrams-%s.txt' % FLAGS.ngram_lengths)
+pos_vocab_file = os.path.join(vocab_dir, 'pos-ngrams-%s.txt' % FLAGS.pos_ngram_lengths)
 glove_file = os.path.join(FLAGS.data_dir, 'glove', FLAGS.glove_file) 
 glove_saved_file = os.path.join(FLAGS.data_dir, 'glove', FLAGS.glove_saved_file) 
 pickle_dir = os.path.join(FLAGS.output_dir, 'pickles')
@@ -137,13 +140,14 @@ def test(model, dataset):
         timestamp = datetime.utcnow().strftime("%s")
         np.savetxt("%s/%s/%s.csv" % (predictions_dir, FLAGS.mode, timestamp), predictions, delimiter=",")       
 
-def get_model(vocab, dataset):
+def get_model(vocab, pos_vocab, dataset):
     kwargs = {
         'batch_size': FLAGS.batch_size,
         'max_seq_len': FLAGS.max_seq_len,
         'num_classes': len(dataset.CLASS_LABELS),
         'l2_reg': FLAGS.l2_reg,
         'vocab': vocab,
+        'pos_vocab': pos_vocab,
         'embedding_size': FLAGS.embedding_size,
         'hidden_size': FLAGS.hidden_size 
     }
@@ -164,17 +168,20 @@ def main(unused_argv):
 
     # Load the vocabulary file.
     ngram_lengths = [int(i) for i in FLAGS.ngram_lengths.split(',')]
+    pos_ngram_lengths = [int(i) for i in FLAGS.pos_ngram_lengths.split(',')]
+
     vocab = Vocab(vocab_file, os.path.join(FLAGS.data_dir, FLAGS.input_type), ngram_lengths)
+    pos_vocab = Vocab(pos_vocab_file, os.path.join(FLAGS.data_dir, FLAGS.pos_data_dir), pos_ngram_lengths)
 
     # Load the data file.
     dataset = Dataset(FLAGS.data_dir, FLAGS.input_type, FLAGS.preprocessor,
-                      FLAGS.max_seq_len, vocab, pickle_file, ngram_lengths)
+                      FLAGS.max_seq_len, vocab, pos_vocab, pickle_file, ngram_lengths, pos_ngram_lengths)
 
     with tf.Graph().as_default():
 
         # Load the model.
         print "Loading the model..."
-        model = get_model(vocab, dataset)
+        model = get_model(vocab, pos_vocab, dataset)
         model.build()
 
         # Run the model.

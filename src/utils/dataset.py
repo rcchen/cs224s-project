@@ -28,10 +28,13 @@ class Dataset(object):
                  preprocessor,      # e.g. 'tokenized'
                  max_seq_len,       # max length of a sequence to ingest
                  vocab,             # Vocabulary instance
+                 pos_vocab,         # pseudo-vocabulary instance of POS tokens
                  data_file,
-                 ngram_lengths):
+                 ngram_lengths,
+                 pos_ngram_lengths):
 
         self.ngram_lengths = ngram_lengths
+        self.pos_ngram_lengths = pos_ngram_lengths
         self._max_seq_len = int(max_seq_len)
 
         if os.path.isfile(data_file):
@@ -40,20 +43,14 @@ class Dataset(object):
             print "Loading data from the pickled file..."
         else:
             self._dataframes = self._create_dataframes(data_dir, input_type,
-                                    preprocessor, max_seq_len, vocab)
+                                    preprocessor, max_seq_len, vocab, pos_vocab)
             print "Pickling the data object..."
             with open(data_file, "wb") as f:
                 pickle.dump(self._dataframes, f)
 
-    def _create_dataframes(self, data_dir, input_type, preprocessor, max_seq_len, vocab):
+    def _create_dataframes(self, data_dir, input_type, preprocessor, max_seq_len, vocab, pos_vocab):
         """Creates the pandas dataframes for the data."""
         df = {}
-
-        # Load pre-processed POS tag data
-        essay_pos_data = {}
-        train_dat, dev_dat = load_essays_pos(max_seq_len=self._max_seq_len)
-        essay_pos_data['train'] = train_dat.tolist()
-        essay_pos_data['dev'] = dev_dat.tolist()
 
         for split in ['dev', 'train']:
 
@@ -77,14 +74,20 @@ class Dataset(object):
                 data_dir=data_dir, split=split
             ))
 
+            # Part of speech
+            pos_data_path = ("{data_dir}/pos/{split}/{preprocessor}").format(
+                data_dir=data_dir, split=split, preprocessor=preprocessor
+            )
+
             split_features = self.extract_features(labels_path, 
                                                    essays_data_path,
                                                    speech_transcriptions_data_path,
                                                    ivectors_data_path,
+                                                   pos_data_path,
                                                    max_seq_len,
-                                                   vocab)
+                                                   vocab,
+                                                   pos_vocab)
 
-            split_features['essay_pos_features'] = essay_pos_data[split]
             df[split] = pd.DataFrame.from_dict(split_features)
 
         return df
@@ -102,12 +105,15 @@ class Dataset(object):
                          essays_data_path,
                          speech_transcriptions_data_path,
                          ivectors_data_path,
+                         pos_data_path,
                          max_seq_len,
-                         vocab):
+                         vocab,
+                         pos_vocab):
         """Returns a dictionary of features, labels, and sequence lengths for the dataset."""
         df = {}
         df['essay_features'] = []
         df['essay_feature_lengths'] = []
+        df['essay_pos_features'] = []
         df['speech_transcription_features'] = []
         df['speech_transcription_feature_lengths'] = []
 
@@ -118,23 +124,22 @@ class Dataset(object):
         # Labels
         df['labels'] = [self.CLASS_LABELS.index(l) for l in labels]
 
-        # Bulk load POS tagger initialization
-        sentence_list = []
-
         for speaker_id in speaker_ids:
 
             filename = speaker_id + '.txt'
 
             # Essays
             with open(os.path.join(essays_data_path, filename)) as f:
-                essay_text = f.read()
-                # Extract POS information
-                sentence_list.append(word_tokenize(essay_text.decode('utf-8')))
-
                 # Index all tokens
-                tokens = vocab.ids_for_sentence(essay_text, self.ngram_lengths)
+                tokens = vocab.ids_for_sentence(f.read(), self.ngram_lengths)
                 df['essay_features'].append(np.array(self.pad_fn(tokens), dtype=np.int64))
                 df['essay_feature_lengths'].append(min(len(tokens), max_seq_len))
+
+            # Essay POS
+            with open(os.path.join(pos_data_path, filename)) as f:
+                # Index all POS n-grams
+                tokens = pos_vocab.ids_for_sentence(f.read(), self.pos_ngram_lengths)
+                df['essay_pos_features'].append(np.array(self.pad_fn(tokens), dtype=np.int32))
 
             # Speech Transcriptions
             with open(os.path.join(speech_transcriptions_data_path, filename)) as f:
