@@ -13,7 +13,7 @@ def main():
     essay_path = 'var/data/essays'
     outfile_base_path = 'var/data/pos'
 
-    paths = [ os.path.join(outfile_base_path, subdir) for subdir in ['', 'dev', 'train']]
+    paths = [ os.path.join(outfile_base_path, subdir) for subdir in ['', 'dev', 'train', 'dev/tokenized', 'train/tokenized']]
 
     for d in paths:
         if not os.path.isdir(d):

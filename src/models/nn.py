@@ -45,6 +45,8 @@ class MultilayerNeuralNetModel(NativeLanguageIdentificationModel):
 
             # ESSAY POS INPUTS
 
+            print 'POS_EMBEDDINGS', pos_embeddings
+            print 'POS_INPUTS', self.essay_pos_inputs_placeholder 
             embedded_essay_pos_inputs = tf.nn.embedding_lookup(pos_embeddings, self.essay_pos_inputs_placeholder)
             embedding_shape = [tf.shape(self.essay_pos_inputs_placeholder)[0], tf.shape(self.essay_pos_inputs_placeholder)[1], self._embedding_size]
             embedded_essay_pos_inputs = tf.reshape(embedded_essay_pos_inputs, shape=embedding_shape)  # reuse shape
