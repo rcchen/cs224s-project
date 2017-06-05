@@ -51,7 +51,9 @@ class Dataset(object):
 
         # Load pre-processed POS tag data
         essay_pos_data = {}
-        essay_pos_data['train'], essay_pos_data['dev'] = load_essays_pos(max_seq_len=self._max_seq_len)
+        train_dat, dev_dat = load_essays_pos(max_seq_len=self._max_seq_len)
+        essay_pos_data['train'] = train_dat.tolist()
+        essay_pos_data['dev'] = dev_dat.tolist()
 
         for split in ['dev', 'train']:
 
