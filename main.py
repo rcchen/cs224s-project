@@ -142,7 +142,7 @@ def test(model, dataset):
 
 def get_model(vocab, pos_vocab, speech_vocab, dataset):
 
-    embedding_matrix, _ = get_glove_vectors(glove_file, glove_saved_file, FLAGS._embedding_size, speech_vocab)
+    embedding_matrix, _ = get_glove_vectors(glove_file, glove_saved_file, FLAGS.embedding_size, speech_vocab)
 
     kwargs = {
         'batch_size': FLAGS.batch_size,
