@@ -21,9 +21,7 @@ class MultilayerNeuralNetModel(NativeLanguageIdentificationModel):
             )
 
             speech_embeddings = tf.get_variable('pos_embeddings',
-                shape=(self._pos_vocab.size(), self._embedding_size),
                 initializer=tf.constant(self._embedding_matrix),
-                dtype=tf.float64
             )
 
             pos_embeddings = tf.get_variable('pos_embeddings',
