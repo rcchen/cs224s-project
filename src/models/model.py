@@ -128,7 +128,7 @@ class NativeLanguageIdentificationModel(object):
                                      speech_transcriptions_inputs_len_batch,
                                      ivector_inputs_batch)
         accuracy, loss, predictions = sess.run([self.acc_op, self.loss, self.pred], feed)
-        return accuracy, loss, predictions, speaker_ids
+        return accuracy, loss, predictions
 
 
     def build(self):
