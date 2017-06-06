@@ -30,7 +30,7 @@ flags.DEFINE_string('ngram_lengths', '0,3,4,5', 'Comma-separated list of n-gram 
 flags.DEFINE_string('pos_ngram_lengths', '0', 'Comma-separated list of POS n-gram sizes to use as features.')
 
 flags.DEFINE_integer('max_seq_len', 1e4, 'Max number of words in an example.')
-flags.DEFINE_integer('batch_size', 2, 'Number of examples to run in a batch.')
+flags.DEFINE_integer('batch_size', 50, 'Number of examples to run in a batch.')
 flags.DEFINE_integer('num_epochs', 25, 'Number of epochs to train for.')
 flags.DEFINE_integer('embedding_size', 30, 'Size of trainable embeddings, applicable for char-gram embedding models.')
 flags.DEFINE_integer('hidden_size', 250, 'Number of cells in a neural network layer.')
