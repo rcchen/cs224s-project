@@ -15,12 +15,12 @@ class RNNModel(NativeLanguageIdentificationModel):
             # Initialize embeddings, with shape [pos_tags x hidden_size]
             # TODO: add regularizer to all trainable variables
             embeddings = tf.get_variable('embeddings',
-                shape=(45, self._embedding_size),
+                shape=(self._pos_vocab.size(), self._embedding_size),
                 initializer=tf.contrib.layers.xavier_initializer(),
                 dtype=tf.float64
             )
 
-    	    cell = tf.contrib.rnn.BasicRNNCell(num_units=self._hidden_size)
+    	    cell = tf.contrib.rnn.BasicRNNCell(num_units=self._embedding_size)
 
             embedded_inputs = tf.nn.embedding_lookup(embeddings, self.essay_pos_inputs_placeholder)
             embedding_shape = [tf.shape(self.essay_pos_inputs_placeholder)[0], \

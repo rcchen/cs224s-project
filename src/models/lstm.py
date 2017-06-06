@@ -15,14 +15,14 @@ class LSTMModel(NativeLanguageIdentificationModel):
             # Initialize embeddings, with shape [vocab_size x hidden_size]
             # TODO: add regularizer to all trainable variables
             embeddings = tf.get_variable('embeddings',
-                shape=(45, self._embedding_size),
-                initializer=tf.contrib.layers.xavier_initializer(),  # TODO: consider different initializers
+                shape=(self._pos_vocab.size(), self._embedding_size),
+                initializer=tf.contrib.layers.xavier_initializer(),
                 dtype=tf.float64
             )
 
             cell = tf.contrib.rnn.LSTMCell(
-                self._hidden_size,
-                initializer=tf.contrib.layers.xavier_initializer()  # TODO: consider different initializers
+                self._embedding_size,
+                initializer=tf.contrib.layers.xavier_initializer() 
             )
 
             embedded_inputs = tf.nn.embedding_lookup(embeddings, self.essay_pos_inputs_placeholder)
@@ -31,17 +31,9 @@ class LSTMModel(NativeLanguageIdentificationModel):
                                self._embedding_size]
             embedded_inputs = tf.reshape(embedded_inputs, shape=embedding_shape)
 
-            projected_embedding_inputs = tf.layers.dense(embedded_inputs,
-                self._hidden_size,
-                kernel_initializer=tf.contrib.layers.xavier_initializer(),  # TODO: consider different initializers
-                name="prem_proj")
-
             outputs, (_, final_state) = tf.nn.dynamic_rnn(cell, embedded_inputs,
                                            sequence_length=self.essay_inputs_lengths,
                                            dtype=tf.float64)
-
-            # Note to future self: We can use the final state as the initial state for
-            # serial LSTMs, using different data sources, for example.
 
             # First layer
             # TODO: Add more layers, and add kernel_regularizer using l2_regularization.
