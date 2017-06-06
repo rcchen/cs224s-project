@@ -38,7 +38,7 @@ class RNNModel(NativeLanguageIdentificationModel):
             h1 = tf.layers.dense(final_state,
                 self._num_classes,
                 kernel_initializer=tf.contrib.layers.xavier_initializer(),
-                activation=tf.tanh,
+                activation=tf.nn.relu,
                 use_bias=False,
                 name='h1')
 

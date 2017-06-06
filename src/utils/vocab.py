@@ -63,7 +63,7 @@ class Vocab(object):
 
         with open(vocab_file, "w") as file:
             for word, id in word_to_id.items():
-                file.write("{}\t{}\n".format(word,id))
+                file.write("{}\t{}\n".format(word.encode('utf-8') , id))
 
         print("vocab of size {} written to {}, with PAD token == 0, UNK token == 1".format(max_vocab_size,vocab_file))
 

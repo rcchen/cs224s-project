@@ -28,6 +28,7 @@ class Dataset(object):
                  preprocessor,      # e.g. 'tokenized'
                  max_seq_len,       # max length of a sequence to ingest
                  vocab,             # Vocabulary instance
+                 speech_vocab,
                  pos_vocab,         # pseudo-vocabulary instance of POS tokens
                  data_file,
                  ngram_lengths,
@@ -43,12 +44,13 @@ class Dataset(object):
             print "Loading data from the pickled file..."
         else:
             self._dataframes = self._create_dataframes(data_dir, input_type,
-                                    preprocessor, max_seq_len, vocab, pos_vocab)
+                                    preprocessor, max_seq_len, vocab, pos_vocab, speech_vocab)
             print "Pickling the data object..."
             with open(data_file, "wb") as f:
                 pickle.dump(self._dataframes, f)
 
-    def _create_dataframes(self, data_dir, input_type, preprocessor, max_seq_len, vocab, pos_vocab):
+    def _create_dataframes(self, data_dir, input_type, preprocessor, max_seq_len, vocab,
+                           pos_vocab, speech_vocab):
         """Creates the pandas dataframes for the data."""
         df = {}
 
@@ -86,6 +88,7 @@ class Dataset(object):
                                                    pos_data_path,
                                                    max_seq_len,
                                                    vocab,
+                                                   speech_vocab,
                                                    pos_vocab)
 
             df[split] = pd.DataFrame.from_dict(split_features)
@@ -108,7 +111,8 @@ class Dataset(object):
                          pos_data_path,
                          max_seq_len,
                          vocab,
-                         pos_vocab):
+                         pos_vocab,
+                         speech_vocab):
         """Returns a dictionary of features, labels, and sequence lengths for the dataset."""
         df = {}
         df['essay_features'] = []
@@ -143,7 +147,7 @@ class Dataset(object):
 
             # Speech Transcriptions
             with open(os.path.join(speech_transcriptions_data_path, filename)) as f:
-                tokens = vocab.ids_for_sentence(f.read(), self.ngram_lengths)
+                tokens = speech_vocab.ids_for_sentence(f.read(), self.ngram_lengths)
                 df['speech_transcription_features'].append(np.array(self.pad_fn(tokens), dtype=np.int64))
                 df['speech_transcription_feature_lengths'].append(min(len(tokens), max_seq_len))
 
