@@ -24,7 +24,6 @@ flags.DEFINE_string('glove_saved_file', 'glove.twitter.27B.25d.npy', 'The name o
 flags.DEFINE_string('input_type', 'essays', 'Input data feature type: either "essays", \
                     "speech_transcriptions", "ivectors", or \
                     "speech_transcriptions+ivectors" ')
-flags.DEFINE_string('pos_data_dir', 'pos', 'Name of directory in data folder containing part-of-speech data')
 flags.DEFINE_string('preprocessor', 'tokenized', 'Name of directory with processed essay files.')
 flags.DEFINE_string('ngram_lengths', '0,3,4', 'Comma-separated list of n-gram sizes to use as features.')
 flags.DEFINE_string('pos_ngram_lengths', '3', 'Comma-separated list of POS n-gram sizes to use as features.')
@@ -54,6 +53,7 @@ FLAGS = flags.FLAGS
 # File paths
 vocab_dir = os.path.join(FLAGS.output_dir, 'vocabs')
 vocab_file = os.path.join(vocab_dir, 'ngrams-%s.txt' % FLAGS.ngram_lengths)
+speech_vocab_file = os.path.join(vocab_dir, 'speech-vocab.txt')
 pos_vocab_file = os.path.join(vocab_dir, 'pos-ngrams-%s.txt' % FLAGS.pos_ngram_lengths)
 glove_file = os.path.join(FLAGS.data_dir, 'glove', FLAGS.glove_file) 
 glove_saved_file = os.path.join(FLAGS.data_dir, 'glove', FLAGS.glove_saved_file) 
@@ -140,7 +140,10 @@ def test(model, dataset):
         timestamp = datetime.utcnow().strftime("%s")
         np.savetxt("%s/%s/%s.csv" % (predictions_dir, FLAGS.mode, timestamp), predictions, delimiter=",")       
 
-def get_model(vocab, pos_vocab, dataset):
+def get_model(vocab, pos_vocab, speech_vocab, dataset):
+
+    embedding_matrix, _ = get_glove_vectors(glove_file, glove_saved_file, FLAGS._embedding_size, speech_vocab)
+
     kwargs = {
         'batch_size': FLAGS.batch_size,
         'max_seq_len': FLAGS.max_seq_len,
@@ -148,8 +151,10 @@ def get_model(vocab, pos_vocab, dataset):
         'l2_reg': FLAGS.l2_reg,
         'vocab': vocab,
         'pos_vocab': pos_vocab,
+        'speech_vocab': speech_vocab,
         'embedding_size': FLAGS.embedding_size,
-        'hidden_size': FLAGS.hidden_size 
+        'hidden_size': FLAGS.hidden_size,
+        'embedding_matrix': embedding_matrix
     }
 
     if FLAGS.model == 'baseline':
@@ -170,18 +175,21 @@ def main(unused_argv):
     ngram_lengths = [int(i) for i in FLAGS.ngram_lengths.split(',')]
     pos_ngram_lengths = [int(i) for i in FLAGS.pos_ngram_lengths.split(',')]
 
-    vocab = Vocab(vocab_file, os.path.join(FLAGS.data_dir, FLAGS.input_type), ngram_lengths)
-    pos_vocab = Vocab(pos_vocab_file, os.path.join(FLAGS.data_dir, FLAGS.pos_data_dir), pos_ngram_lengths)
+    vocab = Vocab(vocab_file, os.path.join(FLAGS.data_dir, 'essays'), ngram_lengths)
+    pos_vocab = Vocab(pos_vocab_file, os.path.join(FLAGS.data_dir, 'pos'), pos_ngram_lengths)
+    # Speech only uses single tokens as features. Not char n-grams nor POS.
+    speech_vocab = Vocab(speech_vocab_file, os.path.join(FLAGS.data_dir, 'speech_transcriptions'), [0])
 
     # Load the data file.
     dataset = Dataset(FLAGS.data_dir, FLAGS.input_type, FLAGS.preprocessor,
-                      FLAGS.max_seq_len, vocab, pos_vocab, pickle_file, ngram_lengths, pos_ngram_lengths)
+                      FLAGS.max_seq_len, vocab, speech_vocab, pos_vocab, pickle_file,
+                      ngram_lengths, pos_ngram_lengths)
 
     with tf.Graph().as_default():
 
         # Load the model.
         print "Loading the model..."
-        model = get_model(vocab, pos_vocab, dataset)
+        model = get_model(vocab, pos_vocab, speech_vocab, dataset)
         model.build()
 
         # Run the model.

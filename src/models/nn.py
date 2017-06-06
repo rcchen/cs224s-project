@@ -20,6 +20,12 @@ class MultilayerNeuralNetModel(NativeLanguageIdentificationModel):
                 dtype=tf.float64
             )
 
+            speech_embeddings = tf.get_variable('pos_embeddings',
+                shape=(self._pos_vocab.size(), self._embedding_size),
+                initializer=tf.constant(self._embedding_matrix),
+                dtype=tf.float64
+            )
+
             pos_embeddings = tf.get_variable('pos_embeddings',
                 shape=(self._pos_vocab.size(), self._embedding_size),
                 initializer=tf.contrib.layers.xavier_initializer(),
@@ -62,7 +68,7 @@ class MultilayerNeuralNetModel(NativeLanguageIdentificationModel):
 
             # SPEECH TRANSCRIPTION INPUTS
             embedded_speech_inputs = tf.reduce_sum(
-                tf.nn.embedding_lookup(embeddings, self.speech_transcriptions_inputs_placeholder),
+                tf.nn.embedding_lookup(speech_embeddings, self.speech_transcriptions_inputs_placeholder),
                 axis=1
             )
 

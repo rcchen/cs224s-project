@@ -4,14 +4,17 @@ class NativeLanguageIdentificationModel(object):
     """Abstracts a Tensorflow graph for the NLI task."""
 
     def __init__(self, batch_size, max_seq_len, num_classes, l2_reg, vocab,
-                 embedding_size, hidden_size, pos_vocab):
+                 embedding_size, hidden_size, pos_vocab, speech_vocab,
+                 embedding_matrix):
         self._batch_size = batch_size
         self._max_seq_len = max_seq_len
         self._num_classes = num_classes
         self._l2_reg = l2_reg
         self._vocab = vocab
         self._pos_vocab = pos_vocab
+        self._speech_vocab = speech_vocab
         # GloVe vector data
+        self._embedding_matrix = embedding_matrix
         self._embedding_size = embedding_size
         self._hidden_size = hidden_size
 
