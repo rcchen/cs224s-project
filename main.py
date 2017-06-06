@@ -133,7 +133,8 @@ def train(model, dataset):
                 # Save predictions and corresponding speaker IDs
                 print 'Better model found. Saving predictions to %s/%s.csv' % (predictions_dir, FLAGS.name)
                 np.savetxt("%s/%s.csv" % (predictions_dir, FLAGS.name), predictions, delimiter=",")
-                np.savetxt("%s/%s-speaker-ids.csv" % (predictions_dir, FLAGS.name), speaker_ids, delimiter=",")
+                np.savez("%s/%s-predictions-and-speakers.npz" % (predictions_dir, FLAGS.name), 
+                    predictions=predictions, speaker_ids=speaker_ids)
 
 
 def test(model, dataset):
