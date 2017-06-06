@@ -128,6 +128,9 @@ class Dataset(object):
         # Labels
         df['labels'] = [self.CLASS_LABELS.index(l) for l in labels]
 
+        # Speaker ID: for analysis
+        df['speaker_ids'] = speaker_ids
+
         for speaker_id in speaker_ids:
 
             filename = speaker_id + '.txt'
@@ -166,7 +169,8 @@ class Dataset(object):
                np.stack(df['speech_transcription_features']), \
                np.stack(df['speech_transcription_feature_lengths']), \
                np.stack(df['ivectors']), \
-               np.stack(df['labels'])
+               np.stack(df['labels']), \
+               np.stack(df['speaker_ids'])
 
     def _make_iterator(self, df, batch_size):
         total_examples = len(df)

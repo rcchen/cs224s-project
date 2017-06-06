@@ -13,7 +13,8 @@ from src.utils.glove import get_glove_vectors
 flags = tf.app.flags
 
 # Running conditions
-flags.DEFINE_string('model', 'baseline', 'The name of the model to run.')
+flags.DEFINE_string('name', '', 'The name of the model.')
+flags.DEFINE_string('model', 'nn', 'The name of the model to run.')
 flags.DEFINE_string('mode', 'train', 'Running mode: either "dev", "train", or "test"')
 flags.DEFINE_string('data_dir', 'var/data', 'The directory containing data files.')
 flags.DEFINE_string('output_dir', 'output', 'The directory for output to go.')
@@ -25,12 +26,12 @@ flags.DEFINE_string('input_type', 'essays', 'Input data feature type: either "es
                     "speech_transcriptions", "ivectors", or \
                     "speech_transcriptions+ivectors" ')
 flags.DEFINE_string('preprocessor', 'tokenized', 'Name of directory with processed essay files.')
-flags.DEFINE_string('ngram_lengths', '0,3,4', 'Comma-separated list of n-gram sizes to use as features.')
-flags.DEFINE_string('pos_ngram_lengths', '3', 'Comma-separated list of POS n-gram sizes to use as features.')
+flags.DEFINE_string('ngram_lengths', '0,3,4,5', 'Comma-separated list of n-gram sizes to use as features.')
+flags.DEFINE_string('pos_ngram_lengths', '0', 'Comma-separated list of POS n-gram sizes to use as features.')
 
-flags.DEFINE_integer('max_seq_len', 1e4, 'Max number of words in an example.')
+flags.DEFINE_integer('max_seq_len', 1e5, 'Max number of words in an example.')
 flags.DEFINE_integer('batch_size', 40, 'Number of examples to run in a batch.')
-flags.DEFINE_integer('num_epochs', 100, 'Number of epochs to train for.')
+flags.DEFINE_integer('num_epochs', 30, 'Number of epochs to train for.')
 flags.DEFINE_integer('embedding_size', 25, 'Size of trainable embeddings, applicable for char-gram embedding models.')
 flags.DEFINE_integer('hidden_size', 300, 'Number of cells in a neural network layer.')
 
@@ -89,6 +90,7 @@ def run_eval_epoch(sess, model, dataset):
     batch_sizes = []
     accuracies = []
     preds = []
+    speaker_ids = []
 
     print '-'*79
     prog = Progbar(target=dataset.split_num_batches(FLAGS.dev_split, FLAGS.batch_size))
@@ -99,11 +101,12 @@ def run_eval_epoch(sess, model, dataset):
         batch_sizes.append(batch[0].shape[0])
         accuracies.append(acc)
         preds.append(pred)
+        speaker_ids.append(batch[-1]) # speaker_id
 
     accuracy = np.average(accuracies, weights=batch_sizes)
     print 'Accuracy: %s' % accuracy
     print '-'*79
-    return accuracy, np.concatenate(preds)
+    return accuracy, np.concatenate(preds), np.concatenate(speaker_ids)
 
 
 def train(model, dataset):
@@ -122,12 +125,14 @@ def train(model, dataset):
         best_accuracy = 0
         for epoch in range(FLAGS.num_epochs):
             run_train_epoch(sess, model, dataset, epoch, summary_writer)
-            dev_accuracy, predictions = run_eval_epoch(sess, model, dataset)
+            dev_accuracy, predictions, speaker_ids = run_eval_epoch(sess, model, dataset)
             if dev_accuracy > best_accuracy:
                 saver.save(sess, checkpoint_path)
                 best_accuracy = dev_accuracy
-            timestamp = datetime.utcnow().strftime('%s')
-            np.savetxt("%s/%s/%s.csv" % (predictions_dir, FLAGS.mode, timestamp), predictions, delimiter=",")       
+
+                # Save predictions and corresponding speaker IDs
+                np.savetxt("%s/%s.csv" % (predictions_dir, FLAGS.name), predictions, delimiter=",")
+                np.savetxt("%s/%s-speaker-ids.csv" % (predictions_dir, FLAGS.name), speaker_ids, delimiter=",")
 
 
 def test(model, dataset):
@@ -141,9 +146,6 @@ def test(model, dataset):
         np.savetxt("%s/%s/%s.csv" % (predictions_dir, FLAGS.mode, timestamp), predictions, delimiter=",")       
 
 def get_model(vocab, pos_vocab, speech_vocab, dataset):
-
-    embedding_matrix, _ = get_glove_vectors(glove_file, glove_saved_file, FLAGS.embedding_size, speech_vocab)
-
     kwargs = {
         'batch_size': FLAGS.batch_size,
         'max_seq_len': FLAGS.max_seq_len,
@@ -153,8 +155,7 @@ def get_model(vocab, pos_vocab, speech_vocab, dataset):
         'pos_vocab': pos_vocab,
         'speech_vocab': speech_vocab,
         'embedding_size': FLAGS.embedding_size,
-        'hidden_size': FLAGS.hidden_size,
-        'embedding_matrix': embedding_matrix
+        'hidden_size': FLAGS.hidden_size
     }
 
     if FLAGS.model == 'baseline':

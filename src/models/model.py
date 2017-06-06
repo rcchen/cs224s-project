@@ -4,8 +4,7 @@ class NativeLanguageIdentificationModel(object):
     """Abstracts a Tensorflow graph for the NLI task."""
 
     def __init__(self, batch_size, max_seq_len, num_classes, l2_reg, vocab,
-                 embedding_size, hidden_size, pos_vocab, speech_vocab,
-                 embedding_matrix):
+                 embedding_size, hidden_size, pos_vocab, speech_vocab):
         self._batch_size = batch_size
         self._max_seq_len = max_seq_len
         self._num_classes = num_classes
@@ -14,7 +13,6 @@ class NativeLanguageIdentificationModel(object):
         self._pos_vocab = pos_vocab
         self._speech_vocab = speech_vocab
         # GloVe vector data
-        self._embedding_matrix = embedding_matrix
         self._embedding_size = embedding_size
         self._hidden_size = hidden_size
 
@@ -111,7 +109,7 @@ class NativeLanguageIdentificationModel(object):
 
     def train_on_batch(self, sess, essay_inputs_batch, essay_inputs_len_batch, essay_inputs_pos_batch,
                        speech_transcription_inputs_batch, speech_transcriptions_inputs_len_batch,
-                       ivector_inputs_batch, labels_batch):
+                       ivector_inputs_batch, labels_batch, speaker_ids):
         feed = self.create_feed_dict(labels_batch, essay_inputs_batch, essay_inputs_len_batch,
                                      essay_inputs_pos_batch,
                                      speech_transcription_inputs_batch,
@@ -123,14 +121,14 @@ class NativeLanguageIdentificationModel(object):
 
     def evaluate_on_batch(self, sess, essay_inputs_batch, essay_inputs_len_batch, essay_inputs_pos_batch,
                           speech_transcription_inputs_batch, speech_transcriptions_inputs_len_batch,
-                          ivector_inputs_batch, labels_batch):
+                          ivector_inputs_batch, labels_batch, speaker_ids):
         feed = self.create_feed_dict(labels_batch, essay_inputs_batch, essay_inputs_len_batch,
                                      essay_inputs_pos_batch,
                                      speech_transcription_inputs_batch,
                                      speech_transcriptions_inputs_len_batch,
                                      ivector_inputs_batch)
         accuracy, loss, predictions = sess.run([self.acc_op, self.loss, self.pred], feed)
-        return accuracy, loss, predictions
+        return accuracy, loss, predictions, speaker_ids
 
 
     def build(self):
