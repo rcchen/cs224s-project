@@ -91,7 +91,7 @@ class MultilayerNeuralNetModel(NativeLanguageIdentificationModel):
                                     activation=tf.tanh, name='iv_h1')
 
             # COMBINE ALL THE INPUTS!
-            total_features = tf.concat([es_h2, sp_h2, iv_h1, pos_h2], axis=1)
+            total_features = tf.concat([es_h2, sp_h2, iv_h1], axis=1)
 
             logits = tf.layers.dense(total_features, self._num_classes, use_bias=False,
                                      kernel_initializer=tf.contrib.layers.xavier_initializer(),
