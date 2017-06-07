@@ -65,7 +65,7 @@ summary_dir = os.path.join(FLAGS.output_dir, 'tensorboard')
 
 # TODO: Customize path so that we can save and load 1< checkpoints for a single model, w/ different hyperparameters.
 checkpoint_dir = os.path.join(FLAGS.output_dir, 'checkpoints')
-checkpoint_path = os.path.join(checkpoint_dir, '%s_model.ckpt' % FLAGS.model)
+checkpoint_path = os.path.join(checkpoint_dir, '%s.ckpt' % FLAGS.name)
 predictions_dir = os.path.join(FLAGS.output_dir, 'predictions')
 
 # Ensure that all necessary output directories exist.

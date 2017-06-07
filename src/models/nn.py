@@ -20,6 +20,8 @@ class MultilayerNeuralNetModel(NativeLanguageIdentificationModel):
                 dtype=tf.float64
             )
 
+            # Save embeddings
+
             speech_embeddings = tf.get_variable('speech_embeddings',
                 shape=(self._vocab.size(), self._embedding_size),
                 initializer=tf.contrib.layers.xavier_initializer(),
